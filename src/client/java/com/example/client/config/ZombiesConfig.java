@@ -19,6 +19,9 @@ public class ZombiesConfig {
     private static final Path CONFIG_PATH =
             FabricLoader.getInstance().getConfigDir().resolve("zombies-mod.json");
 
+    /** Hypixel API key（战绩查询用） */
+    public static String apiKey = "";
+
 
 
     public static void load() {
@@ -37,13 +40,16 @@ public class ZombiesConfig {
 
             JsonObject root = JsonParser.parseString(json).getAsJsonObject();
 
-            if (root.has("modEnabled")) {
-                ZombiesModClient.guiKey = root.get("guiKey").getAsInt();
-            }
-
             if (root.has("guiKey")) {
                 ZombiesModClient.guiKey = root.get("guiKey").getAsInt();
             }
+
+            if (root.has("apiKey")) {
+                apiKey = root.get("apiKey").getAsString();
+            }
+
+            // 每把枪的开关/延迟配置
+            AutoSwitchWeaponConfig.loadFrom(root);
 
             if (!root.has("modules") || !root.get("modules").isJsonObject()) {
                 return;
@@ -66,6 +72,10 @@ public class ZombiesConfig {
                     if (module.isEnable() != enabled) {
                         module.toggle();
                     }
+                }
+
+                if (moduleJson.has("key")) {
+                    module.setKey(moduleJson.get("key").getAsInt());
                 }
 
                 if (!moduleJson.has("settings") || !moduleJson.get("settings").isJsonObject()) {
@@ -117,6 +127,7 @@ public class ZombiesConfig {
             JsonObject root = new JsonObject();
 
             root.addProperty("guiKey", ZombiesModClient.guiKey);
+            root.addProperty("apiKey", apiKey);
 
             JsonObject modulesJson = new JsonObject();
 
@@ -125,6 +136,7 @@ public class ZombiesConfig {
                     JsonObject moduleJson = new JsonObject();
 
                     moduleJson.addProperty("enabled", module.isEnable());
+                    moduleJson.addProperty("key", module.getKey());
 
                     JsonObject settingsJson = new JsonObject();
 
@@ -140,6 +152,9 @@ public class ZombiesConfig {
             }
 
             root.add("modules", modulesJson);
+
+            // 每把枪的开关/延迟配置
+            AutoSwitchWeaponConfig.saveTo(root);
 
             Files.createDirectories(CONFIG_PATH.getParent());
             Files.writeString(CONFIG_PATH, GSON.toJson(root));

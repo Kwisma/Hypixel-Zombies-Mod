@@ -10,7 +10,6 @@ import java.util.*;
 
 public class TeammateTracker implements IMinecraft {
 
-    /** 以用户名为主键，名单来自计分板侧边栏 */
     private static final Map<String, TeammateInfo> TEAMMATES = new LinkedHashMap<>();
 
     public static void syncTeammates() {
@@ -77,9 +76,7 @@ public class TeammateTracker implements IMinecraft {
                 // 活着的真玩家
                 TeammateInfo info = TEAMMATES.get(cleanName(p.getGameProfile().name()));
                 if (info != null) {
-                    info.setRenderEntity(p);
-                    info.setUuid(p.getUUID());
-                    info.setBlocking(PlayerUtils.isPlayerBlockingHyp(p));
+                    info.setRenderEntity(p); // 其余数据(血量/护甲/潜行/格挡)由 HUD 直接读实体
                 }
             } else {
                 // 不在 TAB：可能是倒地假人，名牌里包含某个倒地队友名
@@ -89,7 +86,6 @@ public class TeammateTracker implements IMinecraft {
                 for (TeammateInfo info : TEAMMATES.values()) {
                     if (info.isDown() && display.contains(info.getName())) {
                         info.setRenderEntity(p);
-                        info.setBlocking(false);
                         break;
                     }
                 }

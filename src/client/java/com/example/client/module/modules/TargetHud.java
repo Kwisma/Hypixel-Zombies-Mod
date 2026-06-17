@@ -57,7 +57,7 @@ public class TargetHud extends AbstractModule {
             return;
 
         int width = 150;
-        int height = 62;
+        int height = 45;
         int x = (int) pos.x() - width / 2;
         int y = (int) pos.y() - height;
 
@@ -83,7 +83,7 @@ public class TargetHud extends AbstractModule {
         drawText(event.getGuiGraphicsExtractor(), x, y, name, health, maxHealth, armor, armorToughness, distance);
 
         GuiGraphicsUtils.drawHealthBar(event.getGuiGraphicsExtractor(), x + 8, y + 32, width - 16, 8, percent);
-        GuiGraphicsUtils.drawArmorBar(event.getGuiGraphicsExtractor(), x + 8, y + 50, width - 16, 8, armorPercent);
+//        GuiGraphicsUtils.drawArmorBar(event.getGuiGraphicsExtractor(), x + 8, y + 50, width - 16, 8, armorPercent);
     }
 
 
@@ -107,7 +107,7 @@ public class TargetHud extends AbstractModule {
         graphics.text(mc.font, name, x + 8, y + 7, 0xFFFFFFFF, true);
         graphics.text(mc.font, hpText, x + 8, y + 18, 0xFFFF5555, true);
         graphics.text(mc.font, distanceText, x + 105, y + 18, 0xFFAAAAAA, true);
-        graphics.text(mc.font, armorText, x + 8, y + 42, 0xFF55AAFF, true);
+//        graphics.text(mc.font, armorText, x + 8, y + 42, 0xFF55AAFF, true);
     }
 
 

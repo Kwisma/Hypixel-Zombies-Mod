@@ -88,26 +88,48 @@ public class TeammatesGlow extends AbstractModule {
         for (TeammateInfo ti : TeammateInfo.teammates) {
             Player player = ti.getRenderEntity();
 
-            boolean blocking = ti.isBlocking();
+            boolean blocking = player != null && PlayerUtils.isPlayerBlockingHyp(player);
             boolean down = ti.isDown();
 
             String name = ti.getName()
                     + ChatFormatting.GOLD + " " + formatGold(ti.getGold())
                     + ChatFormatting.YELLOW + (blocking ? " (Blocking)" : "");
 
-            int boxWidth = maxNameWidth + 42;
+            int hpReserve = mc.font.width("9999/9999");
+            int boxWidth = maxNameWidth + 32 + hpReserve;
             GuiGraphicsUtils.drawBackground(graphics, x, y, boxWidth, height);
 
             if (player != null) {
                 GuiGraphicsUtils.drawPlayerHead(graphics, player, x + 4, y + 4, 20);
+                if (player.hurtTime != 0) {
+                    graphics.fill(x + 4, y + 4, x + 20, y + 20, new Color(255,0,0,150).getRGB());
+
+                }
+                if (!down && player.isShiftKeyDown()) {
+                    int bx = x + 4 + 20 - 9;   // 头像右下角
+                    int by = y + 4 + 20 - 9;
+                    graphics.fill(bx - 1, by - 1, bx + 10, by + 10, 0xFF0A0A0A); // 深色描边
+                    graphics.fill(bx,     by,     bx + 9,  by + 9,  0xFF1D9E75); // 青色底
+                    graphics.fill(bx + 1, by + 2, bx + 8,  by + 3,  0xFFFFFFFF); // ▼ 顶
+                    graphics.fill(bx + 2, by + 3, bx + 7,  by + 4,  0xFFFFFFFF);
+                    graphics.fill(bx + 3, by + 4, bx + 6,  by + 5,  0xFFFFFFFF);
+                    graphics.fill(bx + 4, by + 5, bx + 5,  by + 6,  0xFFFFFFFF); // 尖
+                }
             }
 
             graphics.text(mc.font, name, x + 28, y + 4, 0xFFFFFFFF, true);
 
             if (player != null) {
+
                 float health = Math.max(0.0F, player.getHealth());
                 float maxHealth = Math.max(1.0F, player.getMaxHealth());
                 float percent = Math.max(0.0F, Math.min(1.0F, health / maxHealth));
+
+                // 当前/最大生命值，右对齐在名字行；按血量比例上色
+                String hp = (int) Math.ceil(health) + "/" + (int) Math.ceil(maxHealth);
+                int hpColor = percent > 0.5f ? 0xFF66FF66 : (percent > 0.25f ? 0xFFFFD633 : 0xFFFF5555);
+                graphics.text(mc.font, hp, x + boxWidth - mc.font.width(hp) - 6, y + 4, hpColor, true);
+
                 GuiGraphicsUtils.drawHealthBar(graphics, x + 27, y + 14, boxWidth - 30, 4, percent);
 
                 int armor = player.getArmorValue();
@@ -115,7 +137,7 @@ public class TeammatesGlow extends AbstractModule {
                 GuiGraphicsUtils.drawArmorBar(graphics, x + 27, y + 14 + 6, boxWidth - 30, 4, armorPercent);
             }
 
-            //block
+            //down
             if(down) {
                 String str = "REVIVE";
                 int strW = mc.font.width(str);

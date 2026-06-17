@@ -46,20 +46,14 @@ public class ModeSetting extends Setting<String> {
         }
     }
     public String next() {
-        int index = modes.indexOf(value);
-
-        if (index == -1) {
-            value = modes.getFirst();
+        if (modes == null || modes.isEmpty()) {
             return value;
         }
 
-        index++;
+        int index = modes.indexOf(value);
+        index = (index + 1) % modes.size(); // index==-1 → 0
 
-        if (index >= modes.size()) {
-            index = 0;
-        }
-
-        value = modes.get(index);
+        setValue(modes.get(index));
         return value;
     }
 }

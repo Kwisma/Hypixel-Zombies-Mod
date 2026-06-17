@@ -6,9 +6,12 @@ import com.example.client.language.Text;
 import com.example.client.module.annotation.ModuleInfo;
 import com.example.client.setting.Setting;
 import com.example.client.setting.SettingManager;
+import com.example.client.utils.ChatUtils;
 import com.example.client.utils.IMinecraft;
+import com.example.client.utils.render.ToastUtils;
 import lombok.Getter;
 import lombok.Setter;
+import net.minecraft.ChatFormatting;
 
 public class AbstractModule extends SettingManager implements IMinecraft {
     @Getter
@@ -50,9 +53,20 @@ public class AbstractModule extends SettingManager implements IMinecraft {
         this.enable = enable;
         if(enable) {
             EventManager.register(this);
+            if(mc.player != null)
+            {
+                ChatUtils.print(ChatFormatting.AQUA + getName() +ChatFormatting.GRAY+ " was " + ChatFormatting.GREEN +"Enabled");
+//                ToastUtils.show("Module", ChatFormatting.AQUA + getName() +ChatFormatting.GRAY+ " was " + ChatFormatting.GREEN +"Enabled");
+            }
             onEnable();
         }else {
             EventManager.unregister(this);
+            if(mc.player != null)
+            {
+                ChatUtils.print(ChatFormatting.AQUA + getName() +ChatFormatting.GRAY+ " was " + ChatFormatting.RED +"Disabled");
+//                ToastUtils.show("Module", ChatFormatting.AQUA + getName() +ChatFormatting.GRAY+ " was " + ChatFormatting.RED +"Disabled");
+            }
+
             onDisable();
         }
 

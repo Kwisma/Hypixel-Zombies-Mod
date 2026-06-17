@@ -1,9 +1,8 @@
-package com.example.client.mixin;
+package com.example.client.mixin.render;
 
 import com.example.client.module.modules.HideBlockingPlayer;
 import com.example.client.utils.HidePlayerHelper;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
-import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -11,7 +10,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LivingEntityRenderer.class)
 public class LivingEntityRendererMixin {
@@ -25,6 +23,7 @@ public class LivingEntityRendererMixin {
             float partialTicks,
             CallbackInfo ci
     ) {
+
         if (!(entity instanceof Player player)) {
             return;
         }

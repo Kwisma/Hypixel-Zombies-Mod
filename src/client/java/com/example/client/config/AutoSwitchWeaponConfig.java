@@ -1,5 +1,5 @@
 package com.example.client.config;
-import com.example.client.ZombiesGuns;
+import com.example.client.data.ZombiesGuns;
 import com.google.gson.JsonObject;
 import lombok.Getter;
 import lombok.Setter;

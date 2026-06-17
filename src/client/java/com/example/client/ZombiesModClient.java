@@ -7,6 +7,7 @@ import com.example.client.config.ZombiesConfig;
 import com.example.client.events.FabricEvents;
 import com.example.client.events.KeyInputEvent;
 import com.example.client.gui.ZombiesConfigScreen;
+import com.example.client.module.AbstractModule;
 import com.example.client.module.ModuleManager;
 import com.example.client.utils.IMinecraft;
 import net.fabricmc.api.ClientModInitializer;
@@ -47,6 +48,14 @@ public class ZombiesModClient implements ClientModInitializer, IMinecraft {
 			}
 			ZombiesConfigScreen.instance.setParent(null);
 			mc.setScreen(ZombiesConfigScreen.instance);
+		}
+
+		// 模块快捷键：切换绑定了该键的模块
+		for (AbstractModule m : moduleManager.getModuleList()) {
+			if (m.getKey() != 0 && m.getKey() == event.getKey()) {
+				m.toggle();
+				ZombiesConfig.save();
+			}
 		}
 	}
 }

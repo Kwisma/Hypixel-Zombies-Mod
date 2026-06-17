@@ -1,7 +1,7 @@
 package com.example.client.gui;
 
 import com.example.client.config.AutoSwitchWeaponConfig;
-import com.example.client.ZombiesGuns;
+import com.example.client.data.ZombiesGuns;
 import com.example.client.config.ZombiesConfig;
 import com.example.client.utils.render.DoubleSliderButton;
 import net.minecraft.ChatFormatting;
@@ -100,7 +100,7 @@ public class AutoSwitchWeaponScreen extends Screen {
                     0,
                     SLIDER_WIDTH,
                     20,
-                    "Delay",
+                    "Cooldown",
                     0,
                     5000,
                     config.getDelayMs(),
@@ -145,7 +145,7 @@ public class AutoSwitchWeaponScreen extends Screen {
 
         graphics.text(this.font, "Weapon", nameX + 6, 49, 0xFFAAAAAA, false);
         graphics.text(this.font, "Switch", switchX + 30, 49, 0xFFAAAAAA, false);
-        graphics.text(this.font, "Delay", sliderX + 75, 49, 0xFFAAAAAA, false);
+        graphics.text(this.font, "Cooldown", sliderX + 75, 49, 0xFFAAAAAA, false);
 
         graphics.fill(24, 60, this.width - 24, 61, 0xFF333333);
     }

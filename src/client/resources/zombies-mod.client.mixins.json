@@ -13,11 +13,15 @@
     "requireAnnotations": true
   },
   "mixins": [
-    "EntityRendererMixin",
+    "render.EntityRendererMixin",
     "EquipmentLayerRendererMixin",
     "HumanoidArmorLayerMixin",
     "KeyboardHandlerMixin",
-    "LivingEntityRendererMixin",
+    "MouseHandlerInvoker",
+    "render.LivingEntityRendererMixin",
+    "render.LivingEntityRendererChamsMixin",
+    "render.LivingEntityRenderStateMixin",
+    "render.RenderTypesChamsMixin",
     "MinecraftMixin",
     "ScreenEffectRendererMixin",
     "packet.ClientPacketListenerMixin",

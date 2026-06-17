@@ -27,20 +27,21 @@ public enum Language implements IMinecraft {
         return "";
     }
     public static boolean isChinese() {
-        String lang = mc
-                .getLanguageManager()
-                .getSelected()
-                .toLowerCase();
-
-        return lang.startsWith("zh");
+        String lang = selectedLanguage();
+        return lang != null && lang.startsWith("zh");
     }
 
     public static boolean isEnglish() {
-        String lang = mc
-                .getLanguageManager()
-                .getSelected()
-                .toLowerCase();
+        String lang = selectedLanguage();
+        return lang == null || lang.startsWith("en"); // 语言管理器未就绪时默认英文
+    }
 
-        return lang.startsWith("en");
+    /** 客户端早期初始化阶段 languageManager 可能为 null，做容错。 */
+    private static String selectedLanguage() {
+        if (mc.getLanguageManager() == null) {
+            return null;
+        }
+        String selected = mc.getLanguageManager().getSelected();
+        return selected == null ? null : selected.toLowerCase();
     }
 }

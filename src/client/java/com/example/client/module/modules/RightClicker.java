@@ -1,9 +1,8 @@
 package com.example.client.module.modules;
 
 import com.darkmagician6.eventapi.EventTarget;
-import com.example.client.ZombiesGuns;
+import com.example.client.data.ZombiesGuns;
 import com.example.client.events.RenderEvent;
-import com.example.client.events.TickEvent;
 import com.example.client.language.Language;
 import com.example.client.language.Text;
 import com.example.client.module.AbstractModule;
@@ -12,9 +11,10 @@ import com.example.client.setting.annotation.SettingInfo;
 import com.example.client.setting.settings.BooleanSetting;
 import com.example.client.setting.settings.ModeSetting;
 import com.example.client.setting.settings.NumberSetting;
+import com.example.client.mixin.MouseHandlerInvoker;
 import com.example.client.utils.TimeUtils;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
@@ -28,8 +28,8 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
+import org.lwjgl.glfw.GLFW;
 
-import java.awt.*;
 import java.util.Arrays;
 
 @ModuleInfo(name = {
@@ -42,7 +42,7 @@ public class RightClicker extends AbstractModule {
             @Text(label = "Click Mode", language = Language.English),
             @Text(label = "点击模式", language = Language.Chinese)
     })
-    private final ModeSetting mode = new ModeSetting("Key", Arrays.asList("Key", "Simulate"));
+    private final ModeSetting mode = new ModeSetting("Simulate", Arrays.asList("Simulate", "Key"));
     @SettingInfo(name = {
             @Text(label = "Max CPS", language = Language.English),
             @Text(label = "最大CPS", language = Language.Chinese)
@@ -61,7 +61,7 @@ public class RightClicker extends AbstractModule {
     public TimeUtils rightClickTimer = new TimeUtils();
 
     public RightClicker() {
-        registerSetting(maxCPS, minCPS, onlyGuns);
+        registerSetting(mode, maxCPS, minCPS, onlyGuns);
 
     }
 
@@ -78,7 +78,14 @@ public class RightClicker extends AbstractModule {
         }
         long delay = TimeUtils.randomClickDelay(minCPS.getValue().intValue(), maxCPS.getValue().intValue());
         if (rightClickTimer.hasTimeElapsed(delay, true)) {
-            KeyMapping.click(mc.options.keyUse.getDefaultKey());
+            if (mode.is("Simulate")) {
+                ((MouseHandlerInvoker) (Object) mc.mouseHandler).zombiesmod$onButton(
+                        mc.getWindow().handle(),
+                        new MouseButtonInfo(GLFW.GLFW_MOUSE_BUTTON_RIGHT, 0),
+                        1);
+            } else {
+                KeyMapping.click(mc.options.keyUse.getDefaultKey());
+            }
         }
     }
     private boolean shouldSkipInteraction() {

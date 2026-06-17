@@ -1,11 +1,9 @@
 package com.example.client.module;
 
 import com.darkmagician6.eventapi.EventManager;
-import com.darkmagician6.eventapi.EventTarget;
 
 import com.example.client.module.modules.*;
 import lombok.Getter;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +15,10 @@ public class ModuleManager {
     public ModuleManager() {
         add(new AutoSwitchWeapon(), new HideBlockingPlayer(), new RightClicker(), new Sprint(), new TargetHud());
         add(new NoFireEffect(), new TeammatesGlow(), new DPSCounter(), new Notification(), new NoGunFire());
+        add(new ZombieChams());
+        add(new WaveDisplay());
+        add(new PowerupPredictor());
+        add(new StatsQuery());
         EventManager.register(this);
     }
     public AbstractModule getModule(String name) {

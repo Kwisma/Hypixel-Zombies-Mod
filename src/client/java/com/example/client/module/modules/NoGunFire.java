@@ -1,21 +1,16 @@
 package com.example.client.module.modules;
 
-import com.example.client.ZombiesGuns;
+import com.example.client.data.ZombiesGuns;
 import com.example.client.ZombiesModClient;
 import com.example.client.language.Language;
 import com.example.client.language.Text;
 import com.example.client.module.AbstractModule;
 import com.example.client.module.annotation.ModuleInfo;
 import com.example.client.utils.PlayerUtils;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 
 @ModuleInfo(name = {
         @Text(label = "No Gun Fire", language = Language.English),

@@ -27,8 +27,13 @@ public class Notification extends AbstractModule {
             @Text(label = "AA 回合建议", language = Language.Chinese)
     })
     public static final BooleanSetting roundSuggest = new BooleanSetting(true);
+    @SettingInfo(name = {
+            @Text(label = "Show Waves Intervals", language = Language.English),
+            @Text(label = "显示波数", language = Language.Chinese)
+    })
+    public static final BooleanSetting wave = new BooleanSetting(true);
 
     public Notification() {
-        registerSetting(roundRecorder, roundSuggest);
+        registerSetting(roundRecorder, roundSuggest, wave);
     }
 }

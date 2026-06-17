@@ -2,9 +2,9 @@ package com.example.client.tracker;
 
 import com.darkmagician6.eventapi.EventManager;
 import com.darkmagician6.eventapi.EventTarget;
-import com.example.client.ZombiesGuns;
-import com.example.client.ZombiesModClient;
-import com.example.client.ZombiesSpawnTable;
+import com.example.client.*;
+import com.example.client.data.ZombiesGuns;
+import com.example.client.data.ZombiesSpawnTable;
 import com.example.client.events.ChatEvent;
 import com.example.client.events.PacketEvent;
 import com.example.client.events.SoundPacketEvent;
@@ -12,15 +12,13 @@ import com.example.client.events.TickEvent;
 import com.example.client.module.AbstractModule;
 import com.example.client.module.modules.DPSCounter;
 import com.example.client.module.modules.Notification;
-import com.example.client.utils.IMinecraft;
-import com.example.client.utils.PlayerUtils;
-import com.example.client.utils.TextUtils;
+import com.example.client.utils.*;
 import com.example.client.utils.render.ToastUtils;
-import com.example.client.utils.ZombiesUtils;
 import com.example.client.utils.record.HitResult;
 import com.example.client.utils.record.ShotRecord;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.world.InteractionHand;
@@ -28,7 +26,6 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayDeque;
 import java.util.Iterator;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,18 +38,16 @@ public class ServerTracker implements IMinecraft {
         EventManager.register(this);
     }
     boolean roundStartSound = false, roundStartTitle = false;
-    int currentRound = -1;
-    long roundTime = 0L;
-    public static String cleanNameText(String text) {
-        if (text == null) return "";
+    // 当前回合号 + 回合开始时间戳（供波数显示等读取）。单实例，做成静态作为全局真相。
+    public static int currentRound = -1;
+    public static long roundTime = 0L;
 
-        return text
-                .replaceAll("(?i)§[0-9A-FK-ORX]", "")
-                .trim();
-    }
+    public static final PowerupPredictor powerupPredictor = new PowerupPredictor();
     private boolean sound = false;
     private boolean probableShopping = false;
     private boolean probableDoubleGold = false;
+    private boolean probableMaxAmmo = false;
+    private boolean probableInstaKill = false;
     @EventTarget
     public void onSoundTrack(SoundPacketEvent event) {
         if(!PlayerUtils.isInHypZombies()) return;
@@ -70,16 +65,30 @@ public class ServerTracker implements IMinecraft {
             roundStartSound = true;
         }
         if (soundName.equals("minecraft:entity.horse.armor")) {
+            //double gold or ss
             sound = true;
         }
+
+        if (soundName.equals("minecraft:entity.wolf.shake")) {
+            //max ammo
+            probableMaxAmmo = true;
+        }
+
+        if (soundName.equals("minecraft:block.anvil.use")) {
+            //carpenter
+
+        }
+
         if (soundName.equals("minecraft:entity.zombie_horse.death")) {
-            GameStatTracker.activate(GameStat.INSTA_KILL);
+            //insta kill
+            probableInstaKill = true;
         }
         //debug(text);
     }
+    public static final PowerupDetector powerup = new PowerupDetector();
     @EventTarget
     public void onTick(TickEvent event) {
-
+        if(mc.player == null || mc.level == null) return;
 
         if(!PlayerUtils.isInHypZombies()) {
             roundStartTitle = false;
@@ -87,10 +96,14 @@ public class ServerTracker implements IMinecraft {
             sound = false;
             probableDoubleGold = false;
             probableShopping = false;
+            probableMaxAmmo = false;
+            probableInstaKill = false;
             TeammateTracker.clear();
             GameStatTracker.clear();
+            powerup.reset();
             return;
         }
+        powerup.tick();
         GameStatTracker.onTick();
         TeammateTracker.syncTeammates();
         if(roundStartTitle && roundStartSound) {
@@ -119,9 +132,27 @@ public class ServerTracker implements IMinecraft {
                 ToastUtils.show("Round " + currentRound, ZombiesSpawnTable.getMonsters(currentRound), 8000);
                 ToastUtils.show("Round " + currentRound, ZombiesSpawnTable.getLocation(currentRound), 8000);
             }
+//            var pred = powerup.getPredictor();
+//            for (var t : PowerupPredictor.Type.values()) {
+//                if (pred.isPowerupRound(t, currentRound))
+//                    ToastUtils.show("Powerup", t + " 本回合!", 5000);
+//                else {
+//                    int next = pred.nextRound(t, currentRound);
+//                    if (next > 0) ToastUtils.show("Powerup", t + " 下次 R" + next, 5000);
+//                }
+//            }
         }
-
+        if(probableInstaKill) {
+            probableInstaKill = false;
+            powerup.onActivationSound(PowerupPredictor.Type.INSTA);
+            GameStatTracker.activate(GameStat.INSTA_KILL);
+        }
+        if(probableMaxAmmo) {
+            probableMaxAmmo = false;
+            powerup.onActivationSound(PowerupPredictor.Type.MAX);
+        }
         if(sound && probableShopping) {
+            powerup.onActivationSound(PowerupPredictor.Type.SS);
             GameStatTracker.activate(GameStat.SHOPPING_SPREE);
             sound = false;
             probableDoubleGold = false;
@@ -133,6 +164,30 @@ public class ServerTracker implements IMinecraft {
             probableDoubleGold = false;
             probableShopping = false;
         }
+
+//        if(!PlayerUtils.isInHypZombies()) return;
+//        for (Entity e : mc.level.entitiesForRendering()) {
+//            if (!(e instanceof ArmorStand stand)) continue;
+//            Component name = stand.getCustomName();
+//            if (name == null) continue;              // 没名字的(装备架等)跳过
+//
+//            String text  = name.getString();         // 完整文字(含子节点；带语言)
+//            TextColor c  = firstColor(name);         // 第一个颜色
+//            int rgb      = (c == null) ? -1 : c.getValue();   // 0xRRGGBB
+//            //#5555FF Max ammo
+//            //#FF5555 insta kill
+              //#AA00AA ss
+//            System.out.println("[STAND] '" + text + "'  color="
+//                    + (rgb == -1 ? "none" : String.format("#%06X", rgb)));
+//        }
+    }
+    private static TextColor firstColor(Component c) {
+        if (c.getStyle().getColor() != null) return c.getStyle().getColor();
+        for (Component sib : c.getSiblings()) {
+            TextColor cc = firstColor(sib);
+            if (cc != null) return cc;
+        }
+        return null;
     }
     public static String formatSeconds(int totalSeconds) {
         if (totalSeconds < 0) {
@@ -309,11 +364,9 @@ public class ServerTracker implements IMinecraft {
     }
 
     public static void debug(String text) {
-        if (mc.player == null) {
-            return;
+        if (DPSCounter.debug.getValue()) {
+            ChatUtils.print(text);
         }
-        if (DPSCounter.debug.getValue())
-            mc.gui.getChat().addClientSystemMessage(Component.literal("[ShotPacket] " + text));
     }
 
     private ShotRecord findMatchingShot(int gold, boolean critical) {

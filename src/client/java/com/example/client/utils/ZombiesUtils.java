@@ -1,7 +1,6 @@
 package com.example.client.utils;
 
-import com.example.client.ZombiesGuns;
-import net.minecraft.client.multiplayer.ClientLevel;
+import com.example.client.data.ZombiesGuns;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.ItemStack;
@@ -90,7 +89,7 @@ public class ZombiesUtils implements IMinecraft {
         if (!stack.hasFoil()) {
             return 0;
         }
-        //有附魔，但是这把枪只有一种强化伤害，直接算 Ultimate I。
+        //有附魔，但是这把枪只有一种强化伤害，直接算 Ultimate I
         if (!gun.hasMultiUltimateDamage()) {
             return 1;
         }
@@ -181,6 +180,9 @@ public class ZombiesUtils implements IMinecraft {
 
         return text
                 .replaceAll("§.", "")
+                .replace('（', '(')   // 全角左括号 → 半角（中文暴击提示用全角）
+                .replace('）', ')')   // 全角右括号 → 半角
+                .replace("，", "")    // 全角逗号
                 .replace(",", "")
                 .trim();
     }

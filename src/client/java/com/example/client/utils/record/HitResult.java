@@ -1,6 +1,6 @@
 package com.example.client.utils.record;
 
-import com.example.client.ZombiesGuns;
+import com.example.client.data.ZombiesGuns;
 
 public record HitResult(
         long shotId,

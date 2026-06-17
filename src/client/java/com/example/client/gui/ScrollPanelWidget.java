@@ -6,6 +6,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,6 +68,16 @@ public class ScrollPanelWidget extends AbstractWidget {
 
     public void addModuleBox(String name, int baseY, int height) {
         moduleBoxes.add(new ModuleBox(name, baseY, height));
+    }
+
+    public int getScrollOffset() {
+        return scrollOffset;
+    }
+
+    /** 设置滚动偏移（会按当前内容高度夹紧），用于重建内容后恢复滚动位置。 */
+    public void setScrollOffset(int offset) {
+        this.scrollOffset = clamp(offset, 0, maxScroll);
+        updateChildPositions();
     }
 
     public void setContentHeight(int contentHeight) {
@@ -400,50 +411,19 @@ public class ScrollPanelWidget extends AbstractWidget {
     }
 
     @Override
-    protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
+    protected void updateWidgetNarration(@NotNull NarrationElementOutput narrationElementOutput) {
     }
 
     private static int clamp(int value, int min, int max) {
         return Math.max(min, Math.min(max, value));
     }
 
-    private static class ScrollItem {
-        private final AbstractWidget widget;
-        private final int baseX;
-        private final int baseY;
-
-        private ScrollItem(AbstractWidget widget, int baseX, int baseY) {
-            this.widget = widget;
-            this.baseX = baseX;
-            this.baseY = baseY;
-        }
+    private record ScrollItem(AbstractWidget widget, int baseX, int baseY) {
     }
 
-    private static class ScrollText {
-        private final String text;
-        private final int baseX;
-        private final int baseY;
-        private final int color;
-        private final boolean shadow;
-
-        private ScrollText(String text, int baseX, int baseY, int color, boolean shadow) {
-            this.text = text;
-            this.baseX = baseX;
-            this.baseY = baseY;
-            this.color = color;
-            this.shadow = shadow;
-        }
+    private record ScrollText(String text, int baseX, int baseY, int color, boolean shadow) {
     }
 
-    private static class ModuleBox {
-        private final String name;
-        private final int baseY;
-        private final int height;
-
-        private ModuleBox(String name, int baseY, int height) {
-            this.name = name;
-            this.baseY = baseY;
-            this.height = height;
-        }
+    private record ModuleBox(String name, int baseY, int height) {
     }
 }

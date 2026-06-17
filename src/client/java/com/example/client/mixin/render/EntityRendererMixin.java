@@ -1,4 +1,4 @@
-package com.example.client.mixin;
+package com.example.client.mixin.render;
 
 import com.example.client.module.modules.HideBlockingPlayer;
 import com.example.client.utils.HidePlayerHelper;

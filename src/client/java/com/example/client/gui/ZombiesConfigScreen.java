@@ -26,7 +26,6 @@ public class ZombiesConfigScreen extends Screen {
 
     private Screen parent;
 
-    /** 设置关闭后返回的界面。按键打开传 null（回到游戏），从某界面打开就传那个界面。 */
     public void setParent(Screen parent) {
         this.parent = parent;
     }
@@ -35,6 +34,9 @@ public class ZombiesConfigScreen extends Screen {
 
     private Button bindButton;
     private boolean listeningForKey = false;
+
+    /** 正在为哪个模块绑定按键（null = 没在绑） */
+    private AbstractModule listeningModule = null;
 
     private static final int PANEL_WIDTH = 300;
     private static final int WIDGET_WIDTH = 220;
@@ -56,6 +58,7 @@ public class ZombiesConfigScreen extends Screen {
         int centerX = this.width / 2;
 
         this.listeningForKey = false;
+        this.listeningModule = null;
         this.bindButton = Button.builder(
                 bindText(),
                 button -> {
@@ -94,7 +97,7 @@ public class ZombiesConfigScreen extends Screen {
     public boolean keyPressed(@NotNull KeyEvent event) {
         if (this.listeningForKey) {
             int key = event.key();
-            if (key != GLFW.GLFW_KEY_ESCAPE) {   // ESC = 取消绑定，不改键
+            if (key != GLFW.GLFW_KEY_ESCAPE) {
                 ZombiesModClient.guiKey = key;
                 ZombiesConfig.save();
             }
@@ -102,7 +105,16 @@ public class ZombiesConfigScreen extends Screen {
             if (this.bindButton != null) {
                 this.bindButton.setMessage(bindText());
             }
-            return true; // 消费按键，避免误触发关闭等
+            return true;
+        }
+
+        if (this.listeningModule != null) {
+            int key = event.key();
+            this.listeningModule.setKey(key == GLFW.GLFW_KEY_ESCAPE ? 0 : key); // ESC解绑
+            this.listeningModule = null;
+            ZombiesConfig.save();
+            rebuildContent(); // 刷新按钮上显示的键名
+            return true;
         }
         return super.keyPressed(event);
     }
@@ -117,6 +129,23 @@ public class ZombiesConfigScreen extends Screen {
                 .append(Component.literal(keyName).withStyle(ChatFormatting.AQUA));
     }
 
+    /** 模块绑定按钮文字：显示该模块的开关键名，未绑定显示 None。 */
+    private static Component moduleKeyText(AbstractModule module) {
+        int key = module.getKey();
+        if (key <= 0) {
+            return Component.literal("None").withStyle(ChatFormatting.GRAY);
+        }
+        String keyName = InputConstants.Type.KEYSYM.getOrCreate(key).getDisplayName().getString();
+        return Component.literal(keyName).withStyle(ChatFormatting.AQUA);
+    }
+
+    /** 设置变化后重建滚动面板内容，让子设置的显示/隐藏立即生效（无需重开 GUI），并保持滚动条位置。 */
+    private void rebuildContent() {
+        int savedOffset = this.scrollPanel.getScrollOffset();
+        buildModuleContent();
+        this.scrollPanel.setScrollOffset(savedOffset); // buildModuleContent 已更新内容高度，这里会按新高度夹紧
+    }
+
     private void buildModuleContent() {
         this.scrollPanel.clearContent();
 
@@ -128,6 +157,7 @@ public class ZombiesConfigScreen extends Screen {
 
             y += MODULE_PADDING + 12;
 
+            // 模块开关（左），与下方设置项左右对齐（设置项 x=40、宽220）
             this.scrollPanel.addScrollWidget(Button.builder(
                     boolText(module.getName(), module.isEnable()),
                     button -> {
@@ -135,62 +165,84 @@ public class ZombiesConfigScreen extends Screen {
                         button.setMessage(boolText(module.getName(), module.isEnable()));
                         ZombiesConfig.save();
                     }
-            ).bounds(0, 0, WIDGET_WIDTH, 20).build(), y);
+            ).bounds(0, 0, 155, 20).build(), 40, y);
+
+            // 模块按键绑定（右）：点一下进入监听，按下的键即为该模块的开关键；ESC 解绑
+            this.scrollPanel.addScrollWidget(Button.builder(
+                    moduleKeyText(module),
+                    button -> {
+                        this.listeningModule = module;
+                        button.setMessage(Component.literal("<…>").withStyle(ChatFormatting.YELLOW));
+                    }
+            ).bounds(0, 0, 60, 20).build(), 200, y);
 
             y += ITEM_HEIGHT;
 
             for (Setting<?> setting : SettingManager.getSettings(module)) {
-                if (setting instanceof BooleanSetting booleanSetting) {
-                    this.scrollPanel.addScrollWidget(Button.builder(
-                            boolText(setting.getName(), Boolean.TRUE.equals(booleanSetting.getValue())),
-                            button -> {
-                                boolean newValue = !Boolean.TRUE.equals(booleanSetting.getValue());
+                if (!setting.isDisplay()) continue;
 
-                                booleanSetting.setValue(newValue);
-                                button.setMessage(boolText(setting.getName(), newValue));
+                switch (setting) {
+                    case BooleanSetting booleanSetting -> {
+                        this.scrollPanel.addScrollWidget(Button.builder(
+                                boolText(setting.getName(), Boolean.TRUE.equals(booleanSetting.getValue())),
+                                button -> {
+                                    boolean newValue = !Boolean.TRUE.equals(booleanSetting.getValue());
 
-                                ZombiesConfig.save();
-                            }
-                    ).bounds(0, 0, WIDGET_WIDTH, 20).build(), y);
+                                    booleanSetting.setValue(newValue);
+                                    button.setMessage(boolText(setting.getName(), newValue));
 
-                    y += ITEM_HEIGHT;
-                } else if (setting instanceof NumberSetting numberSetting) {
-                    this.scrollPanel.addScrollWidget(new DoubleSliderButton(
-                            0,
-                            0,
-                            WIDGET_WIDTH,
-                            20,
-                            setting.getName(),
-                            numberSetting.getMin(),
-                            numberSetting.getMax(),
-                            numberSetting.getValue().doubleValue(),
-                            stepFromFormat(numberSetting.getPrecisePattern()),
-                            value -> {
-                                numberSetting.setValue(value);
-                                ZombiesConfig.save();
-                            }
-                    ), y);
+                                    ZombiesConfig.save();
 
-                    y += ITEM_HEIGHT;
-                } else if (setting instanceof ModeSetting modeSetting) {
-                    this.scrollPanel.addScrollWidget(Button.builder(
-                            modeText(setting.getName(), modeSetting.getValue()),
-                            button -> {
-                                String newMode = modeSetting.next();
+                                    rebuildContent();//刷新
+                                }
+                        ).bounds(0, 0, WIDGET_WIDTH, 20).build(), y);
 
-                                button.setMessage(modeText(setting.getName(), newMode));
+                        y += ITEM_HEIGHT;
+                    }
+                    case NumberSetting numberSetting -> {
+                        this.scrollPanel.addScrollWidget(new DoubleSliderButton(
+                                0,
+                                0,
+                                WIDGET_WIDTH,
+                                20,
+                                setting.getName(),
+                                numberSetting.getMin(),
+                                numberSetting.getMax(),
+                                numberSetting.getValue().doubleValue(),
+                                stepFromFormat(numberSetting.getPrecisePattern()),
+                                value -> {
+                                    numberSetting.setValue(value);
+                                    ZombiesConfig.save();
+                                }
+                        ), y);
 
-                                ZombiesConfig.save();
-                            }
-                    ).bounds(0, 0, WIDGET_WIDTH, 20).build(), y);
-                    y += ITEM_HEIGHT;
-                } else if (setting instanceof ButtonSetting buttonSetting) {
-                    this.scrollPanel.addScrollWidget(Button.builder(
-                            Component.literal(setting.getName()),
-                            button ->
-                                    buttonSetting.onClickedButton()
-                    ).bounds(0, 0, WIDGET_WIDTH, 20).build(), y);
-                    y += ITEM_HEIGHT;
+                        y += ITEM_HEIGHT;
+                    }
+                    case ModeSetting modeSetting -> {
+                        this.scrollPanel.addScrollWidget(Button.builder(
+                                modeText(setting.getName(), modeSetting.getValue()),
+                                button -> {
+                                    String newMode = modeSetting.next();
+
+                                    button.setMessage(modeText(setting.getName(), newMode));
+
+                                    ZombiesConfig.save();
+                                    rebuildContent(); // 刷新
+                                }
+                        ).bounds(0, 0, WIDGET_WIDTH, 20).build(), y);
+                        y += ITEM_HEIGHT;
+                    }
+                    case ButtonSetting buttonSetting -> {
+                        this.scrollPanel.addScrollWidget(Button.builder(
+                                Component.literal(setting.getName()),
+                                button ->
+                                        buttonSetting.onClickedButton()
+                        ).bounds(0, 0, WIDGET_WIDTH, 20).build(), y);
+                        y += ITEM_HEIGHT;
+
+                    }
+                    default -> {
+                    }
                 }
             }
 

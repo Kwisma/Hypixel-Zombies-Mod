@@ -1,4 +1,4 @@
-package com.example.client;
+package com.example.client.data;
 
 import lombok.Getter;
 import net.minecraft.world.item.Item;

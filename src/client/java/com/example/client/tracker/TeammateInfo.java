@@ -4,8 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.world.entity.player.Player;
 
-import java.util.UUID;
-
 @Getter
 @Setter
 public class TeammateInfo {
@@ -13,11 +11,12 @@ public class TeammateInfo {
     private final String name;
     /** 计分板里的金币数 */
     private long gold;
-    /** 账号 UUID，解析到实体时填充（画头颅用，可为 null） */
-    private UUID uuid;
-    private boolean blocking;
+    /** 倒地状态：来自 TAB 判定，单个实体读不出来，必须存 */
     private boolean isDown;
-    /** 当前用于渲染的实体：活着=真玩家，倒地=Hypixel 假人，离屏=null */
+    /**
+     * 当前关联的实体：活着=真玩家，倒地=Hypixel 假人，离屏=null。
+     * 血量/护甲/潜行/格挡等都直接从它现读，不再做快照。
+     */
     private transient Player renderEntity;
 
     public TeammateInfo(String name) {

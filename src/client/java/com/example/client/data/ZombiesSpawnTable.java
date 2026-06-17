@@ -1,4 +1,4 @@
-package com.example.client;
+package com.example.client.data;
 
 import java.util.HashMap;
 import java.util.Map;
