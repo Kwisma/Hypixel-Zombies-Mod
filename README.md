@@ -1,5 +1,6 @@
 # Hypixel Zombies Mod
 Hypixe僵尸末日辅助Mod
+
 版本: Minecraft 26.1 Fabric
 
 ### 截图
@@ -19,9 +20,13 @@ Hypixe僵尸末日辅助Mod
 | Wave Display | AA怪物波数显示 |
 | Zombie Chams | 僵尸穿墙显示 |
 | Stats Query | 玩家僵尸末日战绩查询 |
+| Round Recorder | 回合计时器 |
+| AA Round Suggest | AA回合建议 |
+| Teammate Info | 显示队友血量,是否格挡,是否shift信息 |
 | AA Powerup Predictor | AA道具掉落预测 |
 | No Gun Fire | 屏蔽开枪火焰 |
 
+所有自动化操作检测等不依赖游戏语言,所有语言功能都生效
 
 # 声明,鸣谢
 [`Hypixel API`](https://github.com/HypixelDev/PublicAPI.git)
