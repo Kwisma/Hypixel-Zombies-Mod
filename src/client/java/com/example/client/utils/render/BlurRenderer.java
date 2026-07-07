@@ -1,9 +1,6 @@
 package com.example.client.utils.render;
 
 import com.example.ZombiesMod;
-import com.mojang.blaze3d.GpuFormat;
-import com.mojang.blaze3d.PrimitiveTopology;
-import com.mojang.blaze3d.pipeline.BindGroupLayout;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.shaders.UniformType;
@@ -15,6 +12,7 @@ import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuSampler;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.GpuTextureView;
+import com.mojang.blaze3d.textures.TextureFormat;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
@@ -66,7 +64,7 @@ public final class BlurRenderer {
         }
 
         try {
-            RenderTarget main = Minecraft.getInstance().gameRenderer.mainRenderTarget();
+            RenderTarget main = Minecraft.getInstance().getMainRenderTarget();
             if (main == null || main.width <= 0 || main.height <= 0) {
                 return;
             }
@@ -95,7 +93,7 @@ public final class BlurRenderer {
         requestedThisFrame = false;
 
         try {
-            RenderTarget main = Minecraft.getInstance().gameRenderer.mainRenderTarget();
+            RenderTarget main = Minecraft.getInstance().getMainRenderTarget();
             if (main == null || main.width <= 0 || main.height <= 0) {
                 return;
             }
@@ -151,13 +149,10 @@ public final class BlurRenderer {
                 .withVertexShader(Identifier.fromNamespaceAndPath("minecraft", "core/position_color"))
                 .withFragmentShader(Identifier.fromNamespaceAndPath("zombies-mod", "core/gui_blur"))
                 .withShaderDefine("BLUR_RADIUS", radius)
-                .withBindGroupLayout(BindGroupLayout.builder()
-                        .withSampler("Sampler0")
-                        .withUniform("DynamicTransforms", UniformType.UNIFORM_BUFFER)
-                        .withUniform("Projection", UniformType.UNIFORM_BUFFER)
-                        .build())
-                .withVertexBinding(0, DefaultVertexFormat.POSITION_COLOR)
-                .withPrimitiveTopology(PrimitiveTopology.QUADS)
+                .withSampler("Sampler0")
+                .withUniform("DynamicTransforms", UniformType.UNIFORM_BUFFER)
+                .withUniform("Projection", UniformType.UNIFORM_BUFFER)
+                .withVertexFormat(DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.QUADS)
                 .withCull(false)
                 .build();
         PIPELINES[radius] = pipeline;
@@ -182,7 +177,7 @@ public final class BlurRenderer {
         snapshotTexture = device.createTexture(
                 "zombiesmod-gui-blur-snapshot",
                 GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING,
-                GpuFormat.RGBA8_UNORM,
+                TextureFormat.RGBA8,
                 width,
                 height,
                 1,

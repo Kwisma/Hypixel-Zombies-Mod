@@ -20,7 +20,7 @@ public class StatsQuery extends AbstractModule {
     protected void onEnable() {
         if(mc.player == null || mc.level == null) return;
         toggle();
-        mc.gui.setScreen(new StatsQueryScreen(null));
+        mc.setScreen(new StatsQueryScreen(null));
         super.onEnable();
     }
 }

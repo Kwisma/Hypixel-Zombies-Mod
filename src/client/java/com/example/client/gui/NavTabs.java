@@ -78,16 +78,16 @@ public final class NavTabs {
             case 0 -> {
                 ZombiesConfigScreen s = ZombiesConfigScreen.instance;
                 if (s == null) s = new ZombiesConfigScreen(parent);
-                mc.gui.setScreen(s);
+                mc.setScreen(s);
             }
             case 1 -> {
                 if (AutoSwitchWeaponScreen.instance == null) {
                     AutoSwitchWeaponScreen.instance = new AutoSwitchWeaponScreen(parent);
                 }
-                mc.gui.setScreen(AutoSwitchWeaponScreen.instance);
+                mc.setScreen(AutoSwitchWeaponScreen.instance);
             }
-            case 2 -> mc.gui.setScreen(new NameProtectScreen(parent));
-            case 3 -> mc.gui.setScreen(new StatsQueryScreen(parent));
+            case 2 -> mc.setScreen(new NameProtectScreen(parent));
+            case 3 -> mc.setScreen(new StatsQueryScreen(parent));
         }
     }
 }

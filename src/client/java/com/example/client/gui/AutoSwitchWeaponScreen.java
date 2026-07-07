@@ -252,7 +252,7 @@ public class AutoSwitchWeaponScreen extends Screen {
 
     @Override
     public void onClose() {
-        Minecraft.getInstance().gui.setScreen(parent);
+        Minecraft.getInstance().setScreen(parent);
     }
 
     private static Component weaponText(ZombiesGuns gun) {

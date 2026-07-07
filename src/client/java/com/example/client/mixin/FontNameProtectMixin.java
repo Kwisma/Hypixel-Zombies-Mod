@@ -33,6 +33,13 @@ public class FontNameProtectMixin {
         return NameProtect.protect(text);
     }
 
+    // 描边文字（少数 HUD/全息）不走 prepareText
+    @ModifyVariable(method = "drawInBatch8xOutline(Lnet/minecraft/util/FormattedCharSequence;FFIILorg/joml/Matrix4fc;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
+            at = @At("HEAD"), argsOnly = true)
+    private FormattedCharSequence zombiesmod$drawOutline(FormattedCharSequence str) {
+        return NameProtect.protect(str);
+    }
+
     // ===== width（替换后宽度要一致）=====
 
     @ModifyVariable(method = "width(Ljava/lang/String;)I", at = @At("HEAD"), argsOnly = true)

@@ -30,7 +30,7 @@ public class BlockTransparency extends AbstractModule {
 
     private void rebuildChunks() {
         if (mc.levelRenderer != null) {
-            mc.levelRenderer.resetLevelRenderData();
+            mc.levelRenderer.allChanged();
         }
     }
     public static final int ALPHA = 128;

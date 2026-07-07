@@ -282,7 +282,7 @@ public class ZombiesConfigScreen extends Screen {
 
     @Override
     public void onClose() {
-        Minecraft.getInstance().gui.setScreen(this.parent);
+        Minecraft.getInstance().setScreen(this.parent);
     }
 
     private static Component boolText(String name, boolean value) {

@@ -31,7 +31,7 @@ public class NameProtect extends AbstractModule {
     protected void onEnable() {
         if (mc.player == null || mc.level == null) return;
         toggle();
-        mc.gui.setScreen(new NameProtectScreen(null));
+        mc.setScreen(new NameProtectScreen(null));
         super.onEnable();
     }
 
@@ -63,7 +63,7 @@ public class NameProtect extends AbstractModule {
      */
     /** 管理界面本身要显示真名，打开它时跳过替换。 */
     private static boolean bypass() {
-        return Minecraft.getInstance().gui.screen() instanceof NameProtectScreen;
+        return Minecraft.getInstance().screen instanceof NameProtectScreen;
     }
 
     public static String apply(String text) {

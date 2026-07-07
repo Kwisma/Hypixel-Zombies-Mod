@@ -145,6 +145,6 @@ public class StatsQueryScreen extends Screen {
     @Override
     public void onClose() {
         ZombiesConfig.save();
-        Minecraft.getInstance().gui.setScreen(parent);
+        Minecraft.getInstance().setScreen(parent);
     }
 }

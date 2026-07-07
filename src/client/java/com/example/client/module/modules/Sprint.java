@@ -15,7 +15,7 @@ import net.minecraft.client.KeyMapping;
 public class Sprint extends AbstractModule {
     @EventTarget
     public void onTick(TickEvent event) {
-        if (mc.gui.screen() != null) {
+        if (mc.screen != null) {
             return;
         }
         mc.options.keySprint.setDown(true);

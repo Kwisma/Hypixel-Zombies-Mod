@@ -8,12 +8,12 @@ public class ChatUtils implements IMinecraft {
         if (mc.player == null) {
             return;
         }
-        mc.gui.chatListener().handleSystemMessage(Component.literal(text), false);
+        mc.gui.getChat().addClientSystemMessage(Component.literal(text));
     }
     public static void print(Component text) {
         if (mc.player == null) {
             return;
         }
-        mc.gui.chatListener().handleSystemMessage(text, false);
+        mc.gui.getChat().addClientSystemMessage(text);
     }
 }

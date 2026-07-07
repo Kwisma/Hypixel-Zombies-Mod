@@ -45,7 +45,7 @@ public class ZombiesModClient implements ClientModInitializer, IMinecraft {
 			return;
 		}
 
-		if (mc.gui.screen() != null) {
+		if (mc.screen != null) {
 			return;
 		}
 //		if(event.getKey() == GLFW.GLFW_KEY_O) {
@@ -69,7 +69,7 @@ public class ZombiesModClient implements ClientModInitializer, IMinecraft {
 				ZombiesConfigScreen.instance = new ZombiesConfigScreen(null);
 			}
 			ZombiesConfigScreen.instance.setParent(null);
-			mc.gui.setScreen(ZombiesConfigScreen.instance);
+			mc.setScreen(ZombiesConfigScreen.instance);
 		}
 
 		// 模块快捷键：切换绑定了该键的模块

@@ -89,8 +89,8 @@ public class ScoreboardUtils implements IMinecraft {
         if (lastColor == null) return false;
 
         int value = lastColor.getValue();
-        return value == TextColor.fromLegacyFormat(ChatFormatting.RED).getValue()
-                || value == TextColor.fromLegacyFormat(ChatFormatting.DARK_RED).getValue();
+        return value == ChatFormatting.RED.getColor()
+                || value == ChatFormatting.DARK_RED.getColor();
     }
 
 

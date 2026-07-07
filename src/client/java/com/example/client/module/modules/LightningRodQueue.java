@@ -15,7 +15,7 @@ import com.example.client.utils.PlayerUtils;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundLoginPacket;
-import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -80,7 +80,7 @@ public class LightningRodQueue extends AbstractModule {
 
     @EventTarget
     public void onEntityLoad(EntityLoadEvent event) {
-        if (!(event.getEntity() instanceof LightningBolt)) return;
+        if (event.getEntity().getType() != EntityType.LIGHTNING_BOLT) return;
 
         // Fabric 的实体加载事件在客户端线程触发，单人和多人使用同一检测路径。
         recordLightningStrike();
@@ -188,7 +188,7 @@ public class LightningRodQueue extends AbstractModule {
     private ItemStack getSlotIcon(boolean coolingDown) {
         if (coolingDown) {
             if (cooldownIcon == null) {
-                cooldownIcon = new ItemStack(Items.DYE.gray());
+                cooldownIcon = new ItemStack(Items.GRAY_DYE);
             }
             return cooldownIcon;
         }

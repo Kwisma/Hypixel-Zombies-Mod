@@ -2,10 +2,7 @@ package com.example.client.newrender;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.pipeline.BlendFunction;
-import com.mojang.blaze3d.pipeline.BindGroupLayout;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
-import com.mojang.blaze3d.GpuFormat;
-import com.mojang.blaze3d.PrimitiveTopology;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.shaders.UniformType;
@@ -18,6 +15,7 @@ import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuSampler;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.GpuTextureView;
+import com.mojang.blaze3d.textures.TextureFormat;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Minecraft;
@@ -27,6 +25,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Optional;
 import java.util.OptionalDouble;
+import java.util.OptionalInt;
 
 /**
  * 液态玻璃面板（移植自 1.8.9 LiquidGlassShader 的思路，重写到 26.1.2 新 blaze3d 管线）。
@@ -54,12 +53,9 @@ public final class LiquidGlass {
             .withLocation(Identifier.fromNamespaceAndPath("zombies-mod", "pipeline/liquid_glass"))
             .withVertexShader(Identifier.fromNamespaceAndPath("zombies-mod", "core/liquid_glass"))
             .withFragmentShader(Identifier.fromNamespaceAndPath("zombies-mod", "core/liquid_glass"))
-            .withBindGroupLayout(BindGroupLayout.builder()
-                    .withSampler("Sampler0")
-                    .withUniform("LiquidGlass", UniformType.UNIFORM_BUFFER)
-                    .build())
-            .withVertexBinding(0, DefaultVertexFormat.POSITION)
-            .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
+            .withSampler("Sampler0")
+            .withUniform("LiquidGlass", UniformType.UNIFORM_BUFFER)
+            .withVertexFormat(DefaultVertexFormat.POSITION, VertexFormat.Mode.TRIANGLES)
             .withCull(false)                                                   // 不剔除（quad 绕序无所谓，否则可能整块被剔掉看不见）
             .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT)) // 半透明混合，alpha 生效
             .withDepthStencilState(Optional.empty())                           // 渲染通道无深度附件 → 不做深度测试
@@ -89,7 +85,7 @@ public final class LiquidGlass {
     ) {
         if (failed) return;
         Minecraft mc = Minecraft.getInstance();
-        RenderTarget main = mc.gameRenderer.mainRenderTarget();
+        RenderTarget main = mc.getMainRenderTarget();
         if (main == null) return;
 
         try {
@@ -125,12 +121,12 @@ public final class LiquidGlass {
             try (RenderPass pass = encoder.createRenderPass(
                     () -> "liquid-glass",
                     main.getColorTextureView(),
-                    Optional.empty())) {       // 不清屏
+                    OptionalInt.empty())) {       // 不清屏
                 pass.setPipeline(PIPELINE);
                 pass.bindTexture("Sampler0", snapshotView, sampler);
                 pass.setUniform("LiquidGlass", uboBuf);
-                pass.setVertexBuffer(0, vbo.slice());
-                pass.draw(0, VERTS, 0, 1);
+                pass.setVertexBuffer(0, vbo);
+                pass.draw(0, VERTS);
             }
 
             uboBuf.close();
@@ -152,7 +148,7 @@ public final class LiquidGlass {
         // VERIFY: createTexture(label, usage, format, w, h, depth/layers, mipLevels)
         snapshotTex = device.createTexture("liquidglass-snapshot",
                 GpuTexture.USAGE_COPY_DST | GpuTexture.USAGE_TEXTURE_BINDING,
-                GpuFormat.RGBA8_UNORM, sw, sh, 1, 1);
+                TextureFormat.RGBA8, sw, sh, 1, 1);
         snapshotView = device.createTextureView(snapshotTex);
         if (sampler == null) {
             // VERIFY: createSampler(addrU, addrV, min, mag, maxLod, aniso)

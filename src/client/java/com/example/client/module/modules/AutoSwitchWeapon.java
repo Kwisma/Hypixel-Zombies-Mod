@@ -50,7 +50,7 @@ public class AutoSwitchWeapon extends AbstractModule {
             if (AutoSwitchWeaponScreen.instance == null) {
                 AutoSwitchWeaponScreen.instance = new AutoSwitchWeaponScreen(ZombiesConfigScreen.instance);
             }
-            mc.gui.setScreen(AutoSwitchWeaponScreen.instance);
+            mc.setScreen(AutoSwitchWeaponScreen.instance);
         }
     };
 
@@ -83,7 +83,7 @@ public class AutoSwitchWeapon extends AbstractModule {
 
 //        if(!PlayerUtils.isInHypZombies()) return;
 
-        if (mc.gui.screen() != null) {
+        if (mc.screen != null) {
             timeUtils.reset();
             return;
         }

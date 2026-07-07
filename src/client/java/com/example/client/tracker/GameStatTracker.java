@@ -99,9 +99,8 @@ public class GameStatTracker implements IMinecraft {
             return;
         }
 
-        mc.gui.chatListener().handleSystemMessage(
-                Component.literal("[GameStat] " + text),
-                false
+        mc.gui.getChat().addClientSystemMessage(
+                Component.literal("[GameStat] " + text)
         );
     }
 }

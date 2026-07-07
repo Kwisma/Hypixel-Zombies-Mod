@@ -93,7 +93,7 @@ public class RightClicker extends AbstractModule {
             return true;
         }
 
-        if (mc.gui.screen() != null) {
+        if (mc.screen != null) {
             return true;
         }
 

@@ -25,7 +25,7 @@ public class ToastUtils implements IMinecraft {
         if (mc.player == null || message == null) return;
 
         SystemToast.add(
-                mc.gui.toastManager(),
+                mc.getToastManager(),
                 new SystemToast.SystemToastId(durationMs),
                 Component.literal(title),
                 message
