@@ -5,6 +5,7 @@ import com.example.client.utils.HidePlayerHelper;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -23,7 +24,11 @@ public class LivingEntityRendererMixin {
             CallbackInfo ci
     ) {
 
-        boolean faded = HidePlayerHelper.shouldFade(entity) && !HidePlayerHelper.isFullHide(entity);
+        // 26.2 的实体渲染状态里，把玩家标记为 invisible 会直接导致玩家皮肤/body 不绘制。
+        // 先禁用玩家的“半透明隐藏”路径；Full Hide 仍由 EntityRendererMixin 处理。
+        boolean faded = !(entity instanceof Player)
+                && HidePlayerHelper.shouldFade(entity)
+                && !HidePlayerHelper.isFullHide(entity);
         if (state instanceof HideEntityState hideState) {
             hideState.zombiesmod$setFaded(faded);
         }
