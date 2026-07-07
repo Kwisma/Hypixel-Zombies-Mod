@@ -12,10 +12,12 @@ import com.example.client.setting.settings.BooleanSetting;
 import com.example.client.setting.settings.NumberSetting;
 import com.example.client.tracker.ServerTracker;
 import com.example.client.utils.PlayerUtils;
+import com.example.client.utils.ZombiesMap;
+import com.example.client.utils.ZombiesUtils;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /**
- * 波数显示：右下角列出当前回合各波次，按"回合开始至今的时间"高亮当前波、变暗已过波。
+ * 波数显示：右下角列出当前回合各波次，用箭头指示当前波、变暗已过波。
  * 回合号/回合起始时间来自 {@link ServerTracker}；波次时间表见 {@link ZombiesWaves}。
  */
 @ModuleInfo(name = {
@@ -54,8 +56,13 @@ public class WaveDisplay extends AbstractModule {
         int round = ServerTracker.currentRound;
         if (round < 0) return;
 
-        int[] waves = ZombiesWaves.getWaves(round);
+        ZombiesMap map = ZombiesUtils.getMap();
+        if (map == null || map == ZombiesMap.NULL) return;
+
+        int[] waves = ZombiesWaves.getWaves(map, round);
         if (waves == null || waves.length == 0) return;
+
+        boolean boss = ZombiesWaves.isBossRound(map, round);
 
         double elapsed = (System.currentTimeMillis() - ServerTracker.roundTime) / 1000.0;
         if (elapsed < 0) elapsed = 0;
@@ -70,27 +77,53 @@ public class WaveDisplay extends AbstractModule {
         int y = (int) (sh * posY.getValue().doubleValue());
         int lineHeight = 11;
 
-        // 标题：回合 + 距下一波倒计时
+        // 标题：回合 + 地图 + (boss 标记) + 距下一波倒计时
         double toNext = ZombiesWaves.secondsToNextWave(waves, elapsed);
-        String header = "Round " + round + (toNext >= 0 ? "  (next " + String.format("%.1fs", toNext) + ")" : "");
-        graphics.text(mc.font, header, x, y, 0xFFFFFFFF, true);
+        String header = "Round " + round + " [" + mapName(map) + "]"
+                + (boss ? " BOSS" : "")
+                + (toNext >= 0 ? "  (next " + String.format("%.1fs", toNext) + ")" : "");
+        graphics.text(mc.font, header, x, y, boss ? 0xFFFF5555 : 0xFFFFFFFF, true);
         y += lineHeight + 2;
 
         for (int i = 0; i < waves.length; i++) {
             String label = "Wave " + (i + 1) + "  " + formatClock(waves[i]);
 
-            int color;
-            if (i < current) {
-                color = 0xFF555555;       // 已过：暗灰
-            } else if (i == current) {
-                color = 0xFFFFFF00;       // 当前：黄色高亮
-            } else {
-                color = 0xFFFFFFFF;       // 未到：白
+            // AA 逐波 boss：巨人/Old One/两者，分别用不同颜色（非 AA 始终 NONE）
+            ZombiesWaves.WaveBoss wb = ZombiesWaves.aaWaveBoss(map, round, i + 1);
+
+            int color = i < current
+                    ? 0xFF555555                 // 已过：暗灰
+                    : bossFutureColor(wb);       // 当前/未到：boss 色，否则白
+
+            if (i == current) {
+                String arrow = "→";
+                graphics.text(mc.font, arrow, x - mc.font.width(arrow) - 2, y, 0xFFFFFFFF, true);
             }
 
             graphics.text(mc.font, label, x, y, color, true);
             y += lineHeight;
         }
+    }
+
+    /** 当前及还没到的波的颜色：巨人=紫, Old One=暗青, 两者=暗棕, 普通=白。 */
+    private static int bossFutureColor(ZombiesWaves.WaveBoss wb) {
+        return switch (wb) {
+            case GIANT -> 0xFF663399;
+            case OLD_ONE -> 0xFF006666;
+            case BOTH -> 0xFF783300;
+            case NONE -> 0xFFFFFFFF;
+        };
+    }
+
+    private static String mapName(ZombiesMap map) {
+        return switch (map) {
+            case DEAD_END -> "Dead End";
+            case BAD_BLOOD -> "Bad Blood";
+            case ALIEN_ARCADIUM -> "Alien Arcadium";
+            case THE_LAB -> "The Lab";
+            case PRISON -> "Prison";
+            case NULL -> "?";
+        };
     }
 
     /** 秒 → m:ss（不足一分钟则 0:ss）。 */

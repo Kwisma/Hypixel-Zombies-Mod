@@ -75,6 +75,11 @@ public enum ZombiesGuns {
         return ultimatedDamage[index];
     }
 
+    /** 返回这把枪可配置的强化等级数量（0 表示基础枪，1 表示 Ultimate I）。 */
+    public int getUltimateLevelCount() {
+        return ultimatedDamage == null ? 0 : ultimatedDamage.length;
+    }
+
     /**
      * 判断是否能多次强化
      */

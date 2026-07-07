@@ -92,12 +92,14 @@ public final class HypixelStats {
         JsonObject arcade = player.getAsJsonObject("stats").getAsJsonObject("Arcade");
 
         int aaBest = getInt(arcade, "best_round_zombies_alienarcadium"); // AA 最佳回合
+        int aaWins = getInt(arcade, "wins_zombies_alienarcadium");        // AA 胜利数
         int totalRounds = getInt(arcade, "total_rounds_survived_zombies"); // 总回合数
         long kills = getLong(arcade, "zombie_kills_zombies");              // 总击杀
         long deaths = getLong(arcade, "deaths_zombies");                   // 总死亡
         double kd = deaths == 0 ? kills : (double) kills / deaths;
 
         String text = "AA BR" + aaBest
+                + " · AA胜 " + aaWins
                 + " · 总R " + fmt(totalRounds)
                 + " · Kills " + fmt(kills)
                 + " · KD " + String.format("%.2f", kd);

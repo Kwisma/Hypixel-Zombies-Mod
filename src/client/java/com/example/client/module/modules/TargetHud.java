@@ -9,6 +9,9 @@ import com.example.client.module.AbstractModule;
 import com.example.client.module.annotation.ModuleInfo;
 import com.example.client.setting.annotation.SettingInfo;
 import com.example.client.setting.settings.NumberSetting;
+import com.example.client.tracker.ServerTracker;
+import com.example.client.utils.PlayerUtils;
+import com.example.client.utils.render.BlurRenderer;
 import com.example.client.utils.render.GuiGraphicsUtils;
 import com.example.client.utils.render.WorldToScreen;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -43,7 +46,8 @@ public class TargetHud extends AbstractModule {
             return;
         }
         raycastTimer = 0;
-        target = raycastTarget(distance.getValue().doubleValue());
+//        System.out.println(ServerTracker.serverPlayer.xRot() + " " + ServerTracker.serverPlayer.yRot());
+        target = PlayerUtils.raycastTarget(ServerTracker.serverPlayer, distance.getValue().doubleValue(), TargetHud::isValidTarget);
     }
 
     @EventTarget
@@ -78,7 +82,7 @@ public class TargetHud extends AbstractModule {
         }
 
         double distance = mc.player.distanceTo(target);
-
+        BlurRenderer.draw(event.getGuiGraphicsExtractor(),  x, y, width, height,10);
         GuiGraphicsUtils.drawBackground(event.getGuiGraphicsExtractor(), x, y, width, height);
         drawText(event.getGuiGraphicsExtractor(), x, y, name, health, maxHealth, armor, armorToughness, distance);
 
@@ -113,53 +117,8 @@ public class TargetHud extends AbstractModule {
 
 
 
-    public static LivingEntity raycastTarget(double distance) {
-        LocalPlayer player = mc.player;
 
-        if (player == null || mc.level == null) {
-            return null;
-        }
-
-        Vec3 start = new Vec3(
-                player.getX(),
-                player.getEyeY(),
-                player.getZ()
-        );
-
-        Vec3 look = getLookVector(player.getXRot(), player.getYRot()).normalize();
-        Vec3 end = start.add(look.scale(distance));
-
-        AABB searchBox = player.getBoundingBox()
-                .expandTowards(look.scale(distance))
-                .inflate(1.0D);
-
-        Entity bestEntity = null;
-        double bestDistanceSq = distance * distance;
-
-        for (Entity entity : mc.level.getEntities(player, searchBox, TargetHud::isValidTarget)) {
-            AABB box = entity.getBoundingBox().inflate(0.3D);
-
-            var optionalHit = box.clip(start, end);
-
-            if (optionalHit.isEmpty()) {
-                continue;
-            }
-
-            double distanceSq = start.distanceToSqr(optionalHit.get());
-
-            if (distanceSq < bestDistanceSq) {
-                bestDistanceSq = distanceSq;
-                bestEntity = entity;
-            }
-        }
-
-        if (bestEntity instanceof LivingEntity living) {
-            return living;
-        }
-
-        return null;
-    }
-    private static boolean isValidTarget(Entity entity) {
+    public static boolean isValidTarget(Entity entity) {
         if (!(entity instanceof LivingEntity living)) {
             return false;
         }
@@ -187,14 +146,5 @@ public class TargetHud extends AbstractModule {
         return true;
     }
 
-    private static Vec3 getLookVector(float xRot, float yRot) {
-        double pitchRad = Math.toRadians(xRot);
-        double yawRad = Math.toRadians(yRot);
 
-        double x = -Math.sin(yawRad) * Math.cos(pitchRad);
-        double y = -Math.sin(pitchRad);
-        double z = Math.cos(yawRad) * Math.cos(pitchRad);
-
-        return new Vec3(x, y, z);
-    }
 }

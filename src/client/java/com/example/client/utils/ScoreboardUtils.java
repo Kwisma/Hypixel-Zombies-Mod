@@ -1,6 +1,9 @@
 package com.example.client.utils;
 
+import com.example.client.tracker.TeammateInfo;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.world.scores.*;
 
 import java.util.ArrayList;
@@ -17,7 +20,12 @@ public class ScoreboardUtils implements IMinecraft {
             int score
     ) {
     }
-    public record ScorePlayer(String name, long gold) {}
+    public record ScorePlayer(
+            String name,
+            long gold,
+            TeammateInfo.PlayerState state,
+            String statusText
+    ) {}
     public static Component getSidebarTitle() {
         if (mc.level == null) {
             return Component.literal("");
@@ -36,34 +44,67 @@ public class ScoreboardUtils implements IMinecraft {
 
     public static List<ScorePlayer> getZombiesPlayers() {
         List<ScorePlayer> out = new ArrayList<>();
-        List<List<String>> groups = getSidebarGroups();
+        List<List<Component>> groups = getSidebarComponentGroups();
         if (groups.size() <= PLAYER_GROUP_INDEX) return out;
 
-        for (String raw : groups.get(PLAYER_GROUP_INDEX)) {
-            String text = cleanScoreboardText(raw);
+        for (Component component : groups.get(PLAYER_GROUP_INDEX)) {
+            String text = cleanScoreboardText(component.getString());
             if (text.isEmpty()) continue;
 
 
             String name = text;
             long gold = 0L;
-            int colon = text.lastIndexOf(':');
+            TeammateInfo.PlayerState state = TeammateInfo.PlayerState.ALIVE;
+            String statusText = "";
+            // 用第一个冒号分隔（玩家名不含冒号）。左边永远是真名；
+            // 右边是数字 = 金币（活着），是状态文字（已死亡/等待救援/复活中…）= 倒地，金币记 0。
+            int colon = text.indexOf(':');
             if (colon > 0) {
                 String left = text.substring(0, colon).trim();
                 String right = text.substring(colon + 1).replace(",", "").trim();
+                name = left;
                 if (!right.isEmpty() && right.chars().allMatch(Character::isDigit)) {
-                    name = left;
                     gold = Long.parseLong(right);
+                } else {
+                    statusText = right;
+                    state = hasTerminalRedColor(component)
+                            ? TeammateInfo.PlayerState.TERMINAL
+                            : TeammateInfo.PlayerState.DOWN;
                 }
             }
             name = name.trim();
-            if (!name.isEmpty()) out.add(new ScorePlayer(name, gold));
+            if (!name.isEmpty()) out.add(new ScorePlayer(name, gold, state, statusText));
         }
         return out;
+    }
+
+    /** 右侧状态位于计分板行末；只按最后一个显式文字颜色判断终止状态。 */
+    private static boolean hasTerminalRedColor(Component component) {
+        TextColor lastColor = null;
+        for (Component part : component.toFlatList()) {
+            if (!part.getString().isBlank() && part.getStyle().getColor() != null) {
+                lastColor = part.getStyle().getColor();
+            }
+        }
+        if (lastColor == null) return false;
+
+        int value = lastColor.getValue();
+        return value == TextColor.fromLegacyFormat(ChatFormatting.RED).getValue()
+                || value == TextColor.fromLegacyFormat(ChatFormatting.DARK_RED).getValue();
     }
 
 
     public static List<String> getSidebarLinesRaw() {
         List<String> result = new ArrayList<>();
+
+        for (Component component : getSidebarLineComponentsRaw()) {
+            result.add(component.getString());
+        }
+        return result;
+    }
+
+    private static List<Component> getSidebarLineComponentsRaw() {
+        List<Component> result = new ArrayList<>();
         if (mc.level == null) return result;
 
         Scoreboard scoreboard = mc.level.getScoreboard();
@@ -78,9 +119,27 @@ public class ScoreboardUtils implements IMinecraft {
                 .toList();
 
         for (PlayerScoreEntry entry : entries) {
-            result.add(getLineComponent(scoreboard, entry).getString());
+            result.add(getLineComponent(scoreboard, entry));
         }
         return result;
+    }
+
+    private static List<List<Component>> getSidebarComponentGroups() {
+        List<List<Component>> groups = new ArrayList<>();
+        List<Component> current = new ArrayList<>();
+
+        for (Component component : getSidebarLineComponentsRaw()) {
+            if (cleanScoreboardText(component.getString()).isEmpty()) {
+                if (!current.isEmpty()) {
+                    groups.add(current);
+                    current = new ArrayList<>();
+                }
+            } else {
+                current.add(component);
+            }
+        }
+        if (!current.isEmpty()) groups.add(current);
+        return groups;
     }
 
     public static List<List<String>> getSidebarGroups() {

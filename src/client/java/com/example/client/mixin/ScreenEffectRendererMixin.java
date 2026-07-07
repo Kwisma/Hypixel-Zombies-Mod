@@ -6,8 +6,8 @@ import com.example.client.module.modules.NoFireEffect;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.ScreenEffectRenderer;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import org.joml.Matrix4f;
@@ -19,13 +19,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ScreenEffectRenderer.class)
 public class ScreenEffectRendererMixin {
     @Inject(
-            method = "renderFire(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V",
+            method = "submitFire(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V",
             at = @At("HEAD"),
             cancellable = true
     )
     private static void zombiesmod$lowFire(
             PoseStack poseStack,
-            MultiBufferSource bufferSource,
+            SubmitNodeCollector collector,
             TextureAtlasSprite sprite,
             CallbackInfo ci
     ) {
@@ -43,19 +43,19 @@ public class ScreenEffectRendererMixin {
             return;
         }
 
-        renderLowFire(poseStack, bufferSource, sprite, alpha);
+        collector.submitCustomGeometry(
+                poseStack,
+                RenderTypes.fireScreenEffect(sprite.atlasLocation()),
+                (pose, builder) -> renderLowFire(pose.pose(), builder, sprite, alpha)
+        );
     }
 
     private static void renderLowFire(
-            PoseStack poseStack,
-            MultiBufferSource bufferSource,
+            Matrix4f basePose,
+            VertexConsumer builder,
             TextureAtlasSprite sprite,
             float alpha
     ) {
-        VertexConsumer builder = bufferSource.getBuffer(
-                RenderTypes.fireScreenEffect(sprite.atlasLocation())
-        );
-
         float u0 = sprite.getU0();
         float u1 = sprite.getU1();
         float v0 = sprite.getV0();
@@ -64,12 +64,9 @@ public class ScreenEffectRendererMixin {
         alpha = Math.max(0.0F, Math.min(1.0F, alpha));
 
         for (int i = 0; i < 2; ++i) {
-            poseStack.pushPose();
-            poseStack.translate((float) (-(i * 2 - 1)) * 0.24F, -0.65F, 0.0F);
-//            poseStack.translate((float) (-(i * 2 - 1)) * 0.24F, -0.3F, 0.0F);
-            poseStack.mulPose(Axis.YP.rotationDegrees((float) (i * 2 - 1) * 10.0F));
-
-            Matrix4f pose = poseStack.last().pose();
+            Matrix4f pose = new Matrix4f(basePose);
+            pose.translate((float) (-(i * 2 - 1)) * 0.24F, -0.65F, 0.0F);
+            pose.rotate(Axis.YP.rotationDegrees((float) (i * 2 - 1) * 10.0F));
 
             builder.addVertex(pose, -0.5F, -0.5F, -0.5F)
                     .setUv(u1, v1)
@@ -86,8 +83,6 @@ public class ScreenEffectRendererMixin {
             builder.addVertex(pose, -0.5F, 0.5F, -0.5F)
                     .setUv(u1, v0)
                     .setColor(1.0F, 1.0F, 1.0F, alpha);
-
-            poseStack.popPose();
         }
     }
 }

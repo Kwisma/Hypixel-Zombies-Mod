@@ -28,11 +28,11 @@ public abstract class PauseScreenMixin extends Screen {
                             if(ZombiesConfigScreen.instance == null)
                                 ZombiesConfigScreen.instance = new ZombiesConfigScreen((Screen) this);
                             ZombiesConfigScreen.instance.setParent((Screen) this);
-                            Minecraft.getInstance().setScreen(ZombiesConfigScreen.instance);
+                            Minecraft.getInstance().gui.setScreen(ZombiesConfigScreen.instance);
                         }
                 ).bounds(
-                        5, 5,     // 左上角 x y
-                        80, 20    // 宽 高
+                        5, 5,
+                        80, 20
                 ).build()
         );
     }

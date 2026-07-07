@@ -3,6 +3,7 @@ package com.example.client.tracker;
 import com.darkmagician6.eventapi.EventManager;
 import com.darkmagician6.eventapi.EventTarget;
 import com.example.client.*;
+import com.example.client.data.PowerupPredictor;
 import com.example.client.data.ZombiesGuns;
 import com.example.client.data.ZombiesSpawnTable;
 import com.example.client.events.ChatEvent;
@@ -12,6 +13,7 @@ import com.example.client.events.TickEvent;
 import com.example.client.module.AbstractModule;
 import com.example.client.module.modules.DPSCounter;
 import com.example.client.module.modules.Notification;
+import com.example.client.module.modules.TargetHud;
 import com.example.client.utils.*;
 import com.example.client.utils.render.ToastUtils;
 import com.example.client.utils.record.HitResult;
@@ -22,8 +24,10 @@ import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
+import javax.swing.*;
 import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.regex.Matcher;
@@ -38,11 +42,15 @@ public class ServerTracker implements IMinecraft {
         EventManager.register(this);
     }
     boolean roundStartSound = false, roundStartTitle = false;
-    // 当前回合号 + 回合开始时间戳（供波数显示等读取）。单实例，做成静态作为全局真相。
+
+    public static int currentGold = 0;
     public static int currentRound = -1;
     public static long roundTime = 0L;
+    private long lastRoundStartGold = -1; // 上一回合开始时我的计分板金币（用于算上回合变化）
 
-    public static final PowerupPredictor powerupPredictor = new PowerupPredictor();
+    public static MovePlayerRecord serverPlayer = null;
+    public static LivingEntity shootTarget = null;
+
     private boolean sound = false;
     private boolean probableShopping = false;
     private boolean probableDoubleGold = false;
@@ -100,7 +108,10 @@ public class ServerTracker implements IMinecraft {
             probableInstaKill = false;
             TeammateTracker.clear();
             GameStatTracker.clear();
-            powerup.reset();
+            lastRoundStartGold = -1; // 离开/换局，重置金币快照
+            // 注意：不在这里 reset powerup！倒地/过场会让挖掘疲劳瞬间消失被误判为"离开"，
+            // 从而清掉已锁定的道具模式（INSTA 表只到 23 回合，清了就再也锁不回 → 永远 ?）。
+            // 道具预测改为只在"新一局开始"时重置（见 onPacketTrack 回合标题处）。
             return;
         }
         powerup.tick();
@@ -111,6 +122,19 @@ public class ServerTracker implements IMinecraft {
             roundStartSound = false;
 
             int lastRound = currentRound - 1;
+
+            // 上回合金币变化：从计分板读我当前金币，与上回合开始时的快照对比
+            long myGold = getMyScoreboardGold();
+            if (myGold >= 0) {
+                if (lastRound >= 1 && lastRoundStartGold >= 0) {
+                    long delta = myGold - lastRoundStartGold;
+                    String sign = delta >= 0 ? "+" : "-";
+                    ChatUtils.print(Component.literal("Round " + lastRound).withStyle(ChatFormatting.RED)
+                            .append(Component.literal(" 金币 ").withStyle(ChatFormatting.YELLOW))
+                            .append(Component.literal(sign + String.format("%,d", Math.abs(delta))).withStyle(ChatFormatting.GOLD)));
+                }
+                lastRoundStartGold = myGold;
+            }
 
             long time = System.currentTimeMillis() - roundTime;
             String timeStr = formatSeconds((int) (time / 1000L));
@@ -125,12 +149,14 @@ public class ServerTracker implements IMinecraft {
             }
 
             roundTime = System.currentTimeMillis();
-            debug("回合开始 " + currentRound);
+//            debug("回合开始 " + currentRound);
 
             if(notification.isEnable() && Notification.roundSuggest.getValue()) {
+                if(ZombiesUtils.getMap() == ZombiesMap.ALIEN_ARCADIUM) {
+                    ToastUtils.show("Round " + currentRound, ZombiesSpawnTable.getMonsters(currentRound), 8000);
+                    ToastUtils.show("Round " + currentRound, ZombiesSpawnTable.getLocation(currentRound), 8000);
+                }
 
-                ToastUtils.show("Round " + currentRound, ZombiesSpawnTable.getMonsters(currentRound), 8000);
-                ToastUtils.show("Round " + currentRound, ZombiesSpawnTable.getLocation(currentRound), 8000);
             }
 //            var pred = powerup.getPredictor();
 //            for (var t : PowerupPredictor.Type.values()) {
@@ -230,13 +256,28 @@ public class ServerTracker implements IMinecraft {
         String message = event.getComponent().getString();
 //        message = cleanNameText(message);
     }
+
+    /** 从计分板侧栏读我自己当前的金币；-1 = 没读到。 */
+    private static long getMyScoreboardGold() {
+        if (mc.player == null) return -1;
+        String me = mc.player.getName().getString();
+        var players = ScoreboardUtils.getZombiesPlayers();
+        for (ScoreboardUtils.ScorePlayer sp : players) {
+            if (sp.name().equalsIgnoreCase(me)) return sp.gold();
+        }
+        for (ScoreboardUtils.ScorePlayer sp : players) { // 兜底：名字可能带前缀
+            if (sp.name().toLowerCase().contains(me.toLowerCase())) return sp.gold();
+        }
+        return -1;
+    }
     @EventTarget
     public void onPacketTrack(PacketEvent event) {
         Packet<?> packet = event.getPacket();
-        if(!PlayerUtils.isInHypZombies()) return;
+//        if(!PlayerUtils.isInHypZombies()) return;
 
         //subtitle check
         if (packet instanceof ClientboundSetSubtitleTextPacket(Component text)) {
+            if(!PlayerUtils.isInHypZombies()) return;
             String subtitle = text.getString();
 //            System.out.println(subtitle);
             if(subtitle.startsWith("§5")) {//dark purple
@@ -255,7 +296,7 @@ public class ServerTracker implements IMinecraft {
             return;
         }
         if (packet instanceof ClientboundSetTitleTextPacket(Component text)) {
-            if(PlayerUtils.isInHypZombies()) {
+            if(ZombiesUtils.getMap() != ZombiesMap.NULL) {
                 String currentTitle = text.getString();
                 Matcher matcher = Pattern.compile("\\d+").matcher(currentTitle);
                 if (!matcher.find())
@@ -264,6 +305,11 @@ public class ServerTracker implements IMinecraft {
                 int round = Integer.parseInt(matcher.group());
                 debug("Round " + round);
                 roundStartTitle = true;
+                // 只在"进入第 1 回合（新一局）"时清道具预测。
+                // 不用 round<currentRound：带数字的非回合标题（道具/特效等）会误触发清空。
+                if (round == 1) {
+                    powerup.reset();
+                }
                 currentRound = round;
             }
             return;
@@ -271,6 +317,22 @@ public class ServerTracker implements IMinecraft {
 
         if (packet instanceof ServerboundSetCarriedItemPacket setSlotPacket) {
             serverSelectedSlot = setSlotPacket.getSlot();
+            return;
+        }
+        //ClientboundContainerSetSlotPacket
+        if (packet instanceof ServerboundMovePlayerPacket movePlayerPacket) {
+            double px = serverPlayer != null ? serverPlayer.x() : mc.player.getX();
+            double py = serverPlayer != null ? serverPlayer.y() : mc.player.getY();
+            double pz = serverPlayer != null ? serverPlayer.z() : mc.player.getZ();
+            float pxr = serverPlayer != null ? serverPlayer.xRot() : mc.player.getXRot();
+            float pyr = serverPlayer != null ? serverPlayer.yRot() : mc.player.getYRot();
+            serverPlayer = new MovePlayerRecord(
+                    movePlayerPacket.getX(px),
+                    movePlayerPacket.getY(py),
+                    movePlayerPacket.getZ(pz),
+                    movePlayerPacket.getXRot(pxr),
+                    movePlayerPacket.getYRot(pyr)
+            );
             return;
         }
 
@@ -306,6 +368,9 @@ public class ServerTracker implements IMinecraft {
 
             SHOTS.addLast(record);
             cleanup();
+
+            shootTarget = PlayerUtils.raycastTarget(serverPlayer, 64, TargetHud::isValidTarget);
+
         }
     }
 

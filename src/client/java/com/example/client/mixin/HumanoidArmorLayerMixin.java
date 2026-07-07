@@ -1,9 +1,8 @@
 package com.example.client.mixin;
-import com.example.client.utils.HidePlayerHelper;
+import com.example.client.utils.HideEntityState;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.layers.HumanoidArmorLayer;
-import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -26,11 +25,7 @@ public class HumanoidArmorLayerMixin {
             float xRot,
             CallbackInfo ci
     ) {
-        if (!(renderState instanceof AvatarRenderState avatarState)) {
-            return;
-        }
-
-        if (HidePlayerHelper.shouldFade(avatarState.id)) {
+        if (renderState instanceof HideEntityState hideState && hideState.zombiesmod$isFaded()) {
             ci.cancel();
         }
     }

@@ -7,6 +7,21 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 
 public class GuiGraphicsUtils {
+    /**
+     * 绘制一个只模糊其后方场景的矩形区域。
+     * radius 使用 GUI 像素，四舍五入并限制在 0~10；调用后再绘制的文字和控件保持清晰。
+     */
+    public static void drawBlur(
+            GuiGraphicsExtractor graphics,
+            int x,
+            int y,
+            int width,
+            int height,
+            float radius
+    ) {
+        BlurRenderer.draw(graphics, x, y, width, height, radius);
+    }
+
     public static void drawBackground(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
         graphics.fill(x, y, x + width, y + height, 0xAA111111);
 

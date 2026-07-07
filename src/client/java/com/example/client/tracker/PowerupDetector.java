@@ -1,6 +1,6 @@
-package com.example.client;
+package com.example.client.tracker;
 
-import com.example.client.tracker.ServerTracker;
+import com.example.client.data.PowerupPredictor;
 import com.example.client.utils.IMinecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
@@ -30,7 +30,7 @@ public final class PowerupDetector implements IMinecraft {
     private static final int MAX = 0x5555FF;
     private static final int SS = 0xAA00AA;
 
-    private static final long DESPAWN_TIMEOUT_MS = 35000L;
+    private static final long DESPAWN_TIMEOUT_MS = 55000L;
 
     private final PowerupPredictor predictor = new PowerupPredictor();
 
@@ -110,7 +110,7 @@ public final class PowerupDetector implements IMinecraft {
         while (it.hasNext()) {
             Map.Entry<Integer, Pending> en = it.next();
             Pending p = en.getValue();
-            if (!seen.contains(en.getKey()) || now - p.lastSeenMs > DESPAWN_TIMEOUT_MS) {
+            if (!seen.contains(en.getKey()) ) {
                 excluded.add(en.getKey());
                 it.remove();
             }

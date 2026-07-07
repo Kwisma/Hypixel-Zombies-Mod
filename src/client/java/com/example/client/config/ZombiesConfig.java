@@ -13,6 +13,8 @@ import net.fabricmc.loader.api.FabricLoader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ZombiesConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -21,6 +23,9 @@ public class ZombiesConfig {
 
     /** Hypixel API key（战绩查询用） */
     public static String apiKey = "";
+
+    /** 被保护的名字列表（显示为 Player1/Player2…） */
+    public static final List<String> protectedNames = new ArrayList<>();
 
 
 
@@ -46,6 +51,13 @@ public class ZombiesConfig {
 
             if (root.has("apiKey")) {
                 apiKey = root.get("apiKey").getAsString();
+            }
+
+            if (root.has("protectedNames") && root.get("protectedNames").isJsonArray()) {
+                protectedNames.clear();
+                for (JsonElement el : root.getAsJsonArray("protectedNames")) {
+                    protectedNames.add(el.getAsString());
+                }
             }
 
             // 每把枪的开关/延迟配置
@@ -128,6 +140,10 @@ public class ZombiesConfig {
 
             root.addProperty("guiKey", ZombiesModClient.guiKey);
             root.addProperty("apiKey", apiKey);
+
+            JsonArray namesArr = new JsonArray();
+            for (String n : protectedNames) namesArr.add(n);
+            root.add("protectedNames", namesArr);
 
             JsonObject modulesJson = new JsonObject();
 

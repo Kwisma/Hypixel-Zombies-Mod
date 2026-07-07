@@ -30,6 +30,7 @@ public class RenderTypesChamsMixin {
     @Inject(method = "entitySolid", at = @At("HEAD"), cancellable = true)
     private static void zombiesmod$entitySolid(Identifier texture, CallbackInfoReturnable<RenderType> cir) {
         if (ChamsRenderType.active) cir.setReturnValue(ChamsRenderType.noDepth(texture));
+
     }
 
     @Inject(method = "entityCutoutCull", at = @At("HEAD"), cancellable = true)

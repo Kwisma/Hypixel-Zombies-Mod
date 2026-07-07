@@ -13,12 +13,21 @@ public class ModuleManager {
     private final ArrayList<AbstractModule> moduleList = new ArrayList<>();
 
     public ModuleManager() {
-        add(new AutoSwitchWeapon(), new HideBlockingPlayer(), new RightClicker(), new Sprint(), new TargetHud());
+        add(new AutoSwitchWeapon(), new HideBlockingPlayer(), new HideZombies(), new RightClicker(), new Sprint(), new TargetHud());
         add(new NoFireEffect(), new TeammatesGlow(), new DPSCounter(), new Notification(), new NoGunFire());
         add(new ZombieChams());
+        add(new BadHeadshot());
+//        add(new BlockTransparency());
         add(new WaveDisplay());
+        add(new LightningRodQueue());
         add(new PowerupPredictor());
         add(new StatsQuery());
+        add(new NameProtect());
+        add(new DamageNumbers());
+        add(new HologramFix());
+        add(new LiquidGlassTest());
+        add(new Hud());
+//        new com.example.client.tracker.AmmoTracker(); // 弹药跟踪样本（自注册到 EventManager）
         EventManager.register(this);
     }
     public AbstractModule getModule(String name) {
@@ -33,15 +42,4 @@ public class ModuleManager {
         moduleList.addAll(Arrays.stream(modules).toList());
     }
 
-    public void cleanup() {
-        for (AbstractModule m : moduleList) {
-            if (m.isEnable()) {
-                m.toggle();
-            }
-            EventManager.unregister(m);
-            m.cleanup();
-        }
-        moduleList.clear();
-        EventManager.unregister(this);
-    }
 }

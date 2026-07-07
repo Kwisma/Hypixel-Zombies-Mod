@@ -27,7 +27,9 @@ public class StatsQueryScreen extends Screen {
     private int panelX, panelY, panelW, panelH;
 
     private static final int ROW_HEIGHT = 30;
-    private static final int LIST_TOP = 96;
+    private static final int API_Y = 58;
+    private static final int QUERY_Y = 84;
+    private static final int LIST_TOP = 112;
     private static final int BOTTOM_SPACE = 44;
 
     public StatsQueryScreen(Screen parent) {
@@ -41,7 +43,7 @@ public class StatsQueryScreen extends Screen {
         Minecraft mc = Minecraft.getInstance();
 
         // API key 输入框
-        this.apiKeyBox = new EditBox(this.font, cx - 150, 40, 274, 20, Component.literal("API Key"));
+        this.apiKeyBox = new EditBox(this.font, cx - 150, API_Y, 274, 20, Component.literal("API Key"));
         this.apiKeyBox.setMaxLength(64);
         this.apiKeyBox.setResponder(s -> { if (!apiKeyHidden) ZombiesConfig.apiKey = s; });
         applyMask();
@@ -52,7 +54,7 @@ public class StatsQueryScreen extends Screen {
             apiKeyHidden = !apiKeyHidden;
             applyMask();
             b.setMessage(eyeLabel());
-        }).bounds(cx + 130, 40, 20, 20).build());
+        }).bounds(cx + 130, API_Y, 20, 20).build());
 
         // 玩家列表（TAB 在场玩家）
         players.clear();
@@ -65,7 +67,7 @@ public class StatsQueryScreen extends Screen {
         // 一键查询
         this.addRenderableWidget(Button.builder(Component.literal("一键查询 (Query All)"), b -> {
             for (Entry e : players) HypixelStats.query(e.name(), e.uuid());
-        }).bounds(cx - 100, 66, 200, 20).build());
+        }).bounds(cx - 100, QUERY_Y, 200, 20).build());
 
         // 滚动面板（你的 ScrollPanelWidget，自带滚动条/拖动/滚轮）
         panelW = 320;
@@ -94,8 +96,9 @@ public class StatsQueryScreen extends Screen {
         super.extractRenderState(graphics, mouseX, mouseY, delta);
 
         int cx = this.width / 2;
-        graphics.text(this.font, "Stats Query", cx - 30, 16, 0xFFFFFFFF, true);
-        graphics.text(this.font, "API Key:", cx - 150, 30, 0xFFAAAAAA, true);
+        graphics.text(this.font, "Stats Query", cx - this.font.width("Stats Query") / 2, 8, 0xFFFFFFFF, true);
+        NavTabs.draw(graphics, this.font, this.width, 3);
+        graphics.text(this.font, "API Key:", cx - 150, 48, 0xFFAAAAAA, true);
 
         // 名字/战绩文字：和按钮同样跟随滚动，裁剪到面板内
         int scroll = this.scrollPanel.getScrollOffset();
@@ -115,6 +118,16 @@ public class StatsQueryScreen extends Screen {
         graphics.disableScissor();
     }
 
+    @Override
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+        int tab = NavTabs.hit(this.width, event.x(), event.y());
+        if (tab >= 0 && tab != 3) {
+            NavTabs.open(tab, this.parent);
+            return true;
+        }
+        return super.mouseClicked(event, doubleClick);
+    }
+
     private Component eyeLabel() {
         return Component.literal(apiKeyHidden ? "*" : "A");
     }
@@ -132,6 +145,6 @@ public class StatsQueryScreen extends Screen {
     @Override
     public void onClose() {
         ZombiesConfig.save();
-        Minecraft.getInstance().setScreen(parent);
+        Minecraft.getInstance().gui.setScreen(parent);
     }
 }

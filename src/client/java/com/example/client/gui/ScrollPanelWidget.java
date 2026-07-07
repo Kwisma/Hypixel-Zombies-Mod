@@ -67,7 +67,11 @@ public class ScrollPanelWidget extends AbstractWidget {
     }
 
     public void addModuleBox(String name, int baseY, int height) {
-        moduleBoxes.add(new ModuleBox(name, baseY, height));
+        addModuleBox(name, baseY, height, false);
+    }
+
+    public void addModuleBox(String name, int baseY, int height, boolean highlight) {
+        moduleBoxes.add(new ModuleBox(name, baseY, height, highlight));
     }
 
     public int getScrollOffset() {
@@ -188,12 +192,14 @@ public class ScrollPanelWidget extends AbstractWidget {
             int drawY1 = Math.max(y, visibleTop);
             int drawY2 = Math.min(y + h, visibleBottom);
 
-            graphics.fill(boxX, drawY1, boxX + boxW, drawY2, 0xAA151515);
+            int bg     = box.highlight ? 0xAA15281A : 0xAA151515; // 拥有=深绿底
+            int border = box.highlight ? 0xFF4CC94C : 0xFF444444; // 拥有=绿色边框
+            graphics.fill(boxX, drawY1, boxX + boxW, drawY2, bg);
 
-            graphics.fill(boxX, drawY1, boxX + boxW, drawY1 + 1, 0xFF444444);
-            graphics.fill(boxX, drawY2 - 1, boxX + boxW, drawY2, 0xFF444444);
-            graphics.fill(boxX, drawY1, boxX + 1, drawY2, 0xFF444444);
-            graphics.fill(boxX + boxW - 1, drawY1, boxX + boxW, drawY2, 0xFF444444);
+            graphics.fill(boxX, drawY1, boxX + boxW, drawY1 + 1, border);
+            graphics.fill(boxX, drawY2 - 1, boxX + boxW, drawY2, border);
+            graphics.fill(boxX, drawY1, boxX + 1, drawY2, border);
+            graphics.fill(boxX + boxW - 1, drawY1, boxX + boxW, drawY2, border);
 
             if (box.name != null && !box.name.isEmpty()) {
                 int titleY = y + 8;
@@ -424,6 +430,6 @@ public class ScrollPanelWidget extends AbstractWidget {
     private record ScrollText(String text, int baseX, int baseY, int color, boolean shadow) {
     }
 
-    private record ModuleBox(String name, int baseY, int height) {
+    private record ModuleBox(String name, int baseY, int height, boolean highlight) {
     }
 }

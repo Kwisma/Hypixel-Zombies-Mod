@@ -1,14 +1,13 @@
 package com.example.client.module.modules;
 
 import com.darkmagician6.eventapi.EventTarget;
-import com.example.client.PowerupPredictor.Type;          // 直接导入嵌套枚举，避开与本模块同名的冲突
+import com.example.client.data.PowerupPredictor.Type;          // 直接导入嵌套枚举，避开与本模块同名的冲突
 import com.example.client.events.RenderEvent;
 import com.example.client.language.Language;
 import com.example.client.language.Text;
 import com.example.client.module.AbstractModule;
 import com.example.client.module.annotation.ModuleInfo;
 import com.example.client.setting.annotation.SettingInfo;
-import com.example.client.setting.settings.BooleanSetting;
 import com.example.client.setting.settings.NumberSetting;
 import com.example.client.tracker.ServerTracker;
 import com.example.client.utils.PlayerUtils;
@@ -55,7 +54,7 @@ public class PowerupPredictor extends AbstractModule {
         for (Type t : Type.values()) {
             String rounds;
             if (!pred.isLocked(t)) {
-                rounds = "?"; //本局还没检测到，模式未锁定
+                rounds = "?";
             } else {
                 StringBuilder sb = new StringBuilder();
                 if (pred.isPowerupRound(t, cur)) sb.append("NOW ");

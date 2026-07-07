@@ -36,22 +36,7 @@ public class ZombiesUtils implements IMinecraft {
     }
     private static boolean isTerracotta(Block block) {
         return block == Blocks.TERRACOTTA
-                || block == Blocks.WHITE_TERRACOTTA
-                || block == Blocks.ORANGE_TERRACOTTA
-                || block == Blocks.MAGENTA_TERRACOTTA
-                || block == Blocks.LIGHT_BLUE_TERRACOTTA
-                || block == Blocks.YELLOW_TERRACOTTA
-                || block == Blocks.LIME_TERRACOTTA
-                || block == Blocks.PINK_TERRACOTTA
-                || block == Blocks.GRAY_TERRACOTTA
-                || block == Blocks.LIGHT_GRAY_TERRACOTTA
-                || block == Blocks.CYAN_TERRACOTTA
-                || block == Blocks.PURPLE_TERRACOTTA
-                || block == Blocks.BLUE_TERRACOTTA
-                || block == Blocks.BROWN_TERRACOTTA
-                || block == Blocks.GREEN_TERRACOTTA
-                || block == Blocks.RED_TERRACOTTA
-                || block == Blocks.BLACK_TERRACOTTA;
+                || Blocks.DYED_TERRACOTTA.asList().contains(block);
     }
 
     public static double getDamageByGold(String chatMessage, ItemStack stack, boolean doubleGold) {
@@ -180,10 +165,10 @@ public class ZombiesUtils implements IMinecraft {
 
         return text
                 .replaceAll("§.", "")
-                .replace('（', '(')   // 全角左括号 → 半角（中文暴击提示用全角）
-                .replace('）', ')')   // 全角右括号 → 半角
-                .replace("，", "")    // 全角逗号
-                .replace(",", "")
+                .replace('（', '(')
+                .replace('）', ')')
+                .replace("，", "")
+                .replace(",", "").replace("！","!")
                 .trim();
     }
 }

@@ -57,20 +57,27 @@ public class GameStatTracker implements IMinecraft {
     }
 
     private static void cleanup() {
-        long now = System.currentTimeMillis();
+        try {
+            long now = System.currentTimeMillis();
 
-        Iterator<Map.Entry<GameStat, Long>> iterator = EXPIRE_TIME.entrySet().iterator();
+            Iterator<Map.Entry<GameStat, Long>> iterator = EXPIRE_TIME.entrySet().iterator();
 
-        while (iterator.hasNext()) {
-            Map.Entry<GameStat, Long> entry = iterator.next();
+            while (iterator.hasNext()) {
+                Map.Entry<GameStat, Long> entry = iterator.next();
 
-            if (entry.getValue() <= now) {
-                iterator.remove();
-                debug(entry.getKey().name() + " expired");
+                if (entry.getValue() <= now) {
+                    // EnumMap 的 Entry 在 iterator.remove() 后立即失效，必须先保存 key。
+                    GameStat expiredStat = entry.getKey();
+                    iterator.remove();
+                    debug(expiredStat.name() + " expired");
+                }
             }
+
+            updateCurrentStat();
+        } catch (Throwable _) {
+
         }
 
-        updateCurrentStat();
     }
 
     private static void updateCurrentStat() {
@@ -92,8 +99,9 @@ public class GameStatTracker implements IMinecraft {
             return;
         }
 
-        mc.gui.getChat().addClientSystemMessage(
-                Component.literal("[GameStat] " + text)
+        mc.gui.chatListener().handleSystemMessage(
+                Component.literal("[GameStat] " + text),
+                false
         );
     }
 }

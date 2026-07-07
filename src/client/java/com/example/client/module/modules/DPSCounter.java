@@ -1,8 +1,6 @@
 package com.example.client.module.modules;
 
 import com.darkmagician6.eventapi.EventTarget;
-import com.example.client.tracker.GameStat;
-import com.example.client.tracker.GameStatTracker;
 import com.example.client.tracker.ServerTracker;
 import com.example.client.events.ChatEvent;
 import com.example.client.events.RenderEvent;
@@ -35,7 +33,6 @@ public class DPSCounter extends AbstractModule {
     @Getter
     private static double dps = 0.0D;
     private static double displayDps = 0.0D;
-    private final ServerTracker serverTracker = new ServerTracker();
 
     @SettingInfo(name = {
             @Text(label = "Debug", language = Language.English),
@@ -95,8 +92,7 @@ public class DPSCounter extends AbstractModule {
             return;
         if (!message.startsWith("+"))
             return;
-        boolean doubleGold = GameStatTracker.isActive(GameStat.DOUBLE_GOLD);
-        HitResult hit = serverTracker.confirmHit(message, doubleGold);
+        HitResult hit = event.getHitResult();
         if (hit == null) {
             return;
         }

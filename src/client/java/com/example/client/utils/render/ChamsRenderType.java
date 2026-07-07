@@ -32,7 +32,6 @@ public final class ChamsRenderType {
                     .withLocation("pipeline/zombiesmod_chams")
                     .withShaderDefine("ALPHA_CUTOUT", 0.1F)
                     .withShaderDefine("PER_FACE_LIGHTING")
-                    .withSampler("Sampler1")
                     .withCull(false)
                     .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, true, -1.0F, -1000000.0F))
                     .build();
