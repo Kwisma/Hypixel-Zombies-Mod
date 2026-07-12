@@ -10,6 +10,7 @@ import com.example.client.utils.HideEntityState;
 import com.example.client.utils.PlayerUtils;
 import com.example.client.utils.render.ChamsRenderType;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
@@ -21,8 +22,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.golem.IronGolem;
 import net.minecraft.world.entity.animal.wolf.Wolf;
 import net.minecraft.world.entity.monster.Enemy;
-import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraft.world.phys.shapes.VoxelShape;
+import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -59,8 +59,21 @@ public class LivingEntityRendererChamsMixin {
             float width = Math.max(0.1F, state.boundingBoxWidth);
             float height = Math.max(0.1F, state.boundingBoxHeight);
             double halfWidth = width / 2.0D;
-            VoxelShape box = Shapes.box(-halfWidth, 0.0D, -halfWidth, halfWidth, height, halfWidth);
-            collector.submitShapeOutline(poseStack, box, RenderTypes.lines(), badHeadshotColor, 2.0F, false);
+            collector.submitCustomGeometry(
+                    poseStack,
+                    RenderTypes.lines(),
+                    (pose, consumer) -> zombiesmod$drawBox(
+                            pose.pose(),
+                            consumer,
+                            (float) -halfWidth,
+                            0.0F,
+                            (float) -halfWidth,
+                            (float) halfWidth,
+                            height,
+                            (float) halfWidth,
+                            badHeadshotColor
+                    )
+            );
         }
     }
 
@@ -89,5 +102,44 @@ public class LivingEntityRendererChamsMixin {
         if (m == null || !m.isEnable()) return false;
         if (ZombieChams.onlyGame.getValue() && !PlayerUtils.isInHypZombies()) return false;
         return entity instanceof Enemy || entity instanceof Wolf || entity instanceof IronGolem;
+    }
+
+    @Unique
+    private static void zombiesmod$drawBox(Matrix4f pose, VertexConsumer consumer,
+                                           float minX, float minY, float minZ,
+                                           float maxX, float maxY, float maxZ,
+                                           int color) {
+        zombiesmod$line(pose, consumer, minX, minY, minZ, maxX, minY, minZ, color);
+        zombiesmod$line(pose, consumer, minX, minY, maxZ, maxX, minY, maxZ, color);
+        zombiesmod$line(pose, consumer, minX, maxY, minZ, maxX, maxY, minZ, color);
+        zombiesmod$line(pose, consumer, minX, maxY, maxZ, maxX, maxY, maxZ, color);
+
+        zombiesmod$line(pose, consumer, minX, minY, minZ, minX, minY, maxZ, color);
+        zombiesmod$line(pose, consumer, maxX, minY, minZ, maxX, minY, maxZ, color);
+        zombiesmod$line(pose, consumer, minX, maxY, minZ, minX, maxY, maxZ, color);
+        zombiesmod$line(pose, consumer, maxX, maxY, minZ, maxX, maxY, maxZ, color);
+
+        zombiesmod$line(pose, consumer, minX, minY, minZ, minX, maxY, minZ, color);
+        zombiesmod$line(pose, consumer, maxX, minY, minZ, maxX, maxY, minZ, color);
+        zombiesmod$line(pose, consumer, minX, minY, maxZ, minX, maxY, maxZ, color);
+        zombiesmod$line(pose, consumer, maxX, minY, maxZ, maxX, maxY, maxZ, color);
+    }
+
+    @Unique
+    private static void zombiesmod$line(Matrix4f pose, VertexConsumer consumer,
+                                        float x1, float y1, float z1,
+                                        float x2, float y2, float z2,
+                                        int color) {
+        float nx = x2 - x1;
+        float ny = y2 - y1;
+        float nz = z2 - z1;
+        float len = (float) Math.sqrt(nx * nx + ny * ny + nz * nz);
+        if (len > 0.0F) {
+            nx /= len;
+            ny /= len;
+            nz /= len;
+        }
+        consumer.addVertex(pose, x1, y1, z1).setColor(color).setNormal(nx, ny, nz);
+        consumer.addVertex(pose, x2, y2, z2).setColor(color).setNormal(nx, ny, nz);
     }
 }
