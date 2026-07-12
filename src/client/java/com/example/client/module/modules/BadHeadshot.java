@@ -3,7 +3,6 @@ package com.example.client.module.modules;
 import com.darkmagician6.eventapi.EventTarget;
 import com.example.client.ZombiesModClient;
 import com.example.client.events.EntityLoadEvent;
-import com.example.client.events.RenderEvent;
 import com.example.client.events.TickEvent;
 import com.example.client.language.Language;
 import com.example.client.language.Text;
@@ -15,8 +14,6 @@ import com.example.client.setting.settings.ColorSetting;
 import com.example.client.setting.settings.NumberSetting;
 import com.example.client.tracker.ServerTracker;
 import com.example.client.utils.PlayerUtils;
-import com.example.client.utils.render.WorldToScreen;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.Entity;
@@ -115,53 +112,20 @@ public class BadHeadshot extends AbstractModule {
         updateLineMobs();
     }
 
-    @EventTarget
-    public void onRender(RenderEvent event) {
-        if (mc.player == null || mc.level == null || !isAllowed()) {
-            return;
-        }
-
-        float partialTicks = event.getDeltaTracker().getGameTimeDeltaPartialTick(false);
-        GuiGraphicsExtractor graphics = event.getGuiGraphicsExtractor();
-
-        LivingEntity target = currentTarget();
-        if (target != null) {
-            drawLabel(graphics, target, "BAD HEADSHOT", targetColor.getValue().getRGB(), partialTicks);
-        }
-
-        for (LivingEntity mob : trackedMobs) {
-            if (mob != target && lineMobIds.contains(mob.getId())) {
-                drawLabel(graphics, mob, "BLOCKING", lineColor.getValue().getRGB(), partialTicks);
-            }
-        }
-    }
-
     public static boolean isBadHeadshotEntity(Entity entity) {
         return entity instanceof LivingEntity living
                 && isAllowed()
                 && currentTarget() == living;
     }
 
+    public static int boxColor(Entity entity) {
+        return isBadHeadshotEntity(entity) ? targetColor.getValue().getRGB() : 0;
+    }
+
     public static boolean isLineEntity(Entity entity) {
         return entity instanceof LivingEntity living
                 && isAllowed()
                 && lineMobIds.contains(living.getId());
-    }
-
-    private static void drawLabel(GuiGraphicsExtractor graphics, LivingEntity entity, String text, int color, float partialTicks) {
-        if (!isAliveTrackedMob(entity)) {
-            return;
-        }
-
-        WorldToScreen.ScreenPos pos = WorldToScreen.projectEntity(entity, partialTicks);
-        if (pos == null) {
-            return;
-        }
-
-        int textWidth = mc.font.width(text);
-        int x = Math.round(pos.x() - textWidth / 2.0F);
-        int y = Math.round(pos.y()) - 12;
-        graphics.text(mc.font, text, x, y, color, true);
     }
 
     private static void updateLineMobs() {
