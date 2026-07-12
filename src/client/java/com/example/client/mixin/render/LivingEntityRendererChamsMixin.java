@@ -2,7 +2,9 @@ package com.example.client.mixin.render;
 
 import com.example.client.ZombiesModClient;
 import com.example.client.module.AbstractModule;
+import com.example.client.module.modules.BadHeadshot;
 import com.example.client.module.modules.ZombieChams;
+import com.example.client.utils.BadHeadshotOutlineState;
 import com.example.client.utils.ChamsState;
 import com.example.client.utils.HideEntityState;
 import com.example.client.utils.PlayerUtils;
@@ -12,12 +14,15 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.golem.IronGolem;
 import net.minecraft.world.entity.animal.wolf.Wolf;
 import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -34,6 +39,9 @@ public class LivingEntityRendererChamsMixin {
         if (state instanceof ChamsState cs) {
             cs.zombiesmod$setChams(zombiesmod$isChamsTarget(entity));
         }
+        if (state instanceof BadHeadshotOutlineState badHeadshotState) {
+            badHeadshotState.zombiesmod$setBadHeadshotBoxColor(BadHeadshot.boxColor(entity));
+        }
     }
 
     // 进入该实体 submit 时开启 chams 标记：期间所有走 RenderTypes 的层（本体/盔甲/头颅…）都会被换成无深度版
@@ -43,6 +51,17 @@ public class LivingEntityRendererChamsMixin {
         ChamsRenderType.active = state instanceof ChamsState cs
                 && cs.zombiesmod$isChams()
                 && (!(state instanceof HideEntityState hideState) || !hideState.zombiesmod$isFaded());
+
+        int badHeadshotColor = state instanceof BadHeadshotOutlineState badHeadshotState
+                ? badHeadshotState.zombiesmod$getBadHeadshotBoxColor()
+                : 0;
+        if (badHeadshotColor != 0) {
+            float width = Math.max(0.1F, state.boundingBoxWidth);
+            float height = Math.max(0.1F, state.boundingBoxHeight);
+            double halfWidth = width / 2.0D;
+            VoxelShape box = Shapes.box(-halfWidth, 0.0D, -halfWidth, halfWidth, height, halfWidth);
+            collector.submitShapeOutline(poseStack, box, RenderTypes.lines(), badHeadshotColor, 2.0F, false);
+        }
     }
 
     @Inject(method = "submit", at = @At("RETURN"))
