@@ -84,7 +84,8 @@ public class TargetHud extends AbstractModule {
         double distance = mc.player.distanceTo(target);
         BlurRenderer.draw(event.getGuiGraphicsExtractor(),  x, y, width, height,10);
         GuiGraphicsUtils.drawBackground(event.getGuiGraphicsExtractor(), x, y, width, height);
-        drawText(event.getGuiGraphicsExtractor(), x, y, name, health, maxHealth, armor, armorToughness, distance);
+        drawText(event.getGuiGraphicsExtractor(), x, y, name, health, maxHealth, armor, armorToughness, distance,
+                BadHeadshot.isBadHeadshotEntity(target));
 
         GuiGraphicsUtils.drawHealthBar(event.getGuiGraphicsExtractor(), x + 8, y + 32, width - 16, 8, percent);
 //        GuiGraphicsUtils.drawArmorBar(event.getGuiGraphicsExtractor(), x + 8, y + 50, width - 16, 8, armorPercent);
@@ -100,7 +101,8 @@ public class TargetHud extends AbstractModule {
             float maxHealth,
             int armor,
             double armorToughness,
-            double distance
+            double distance,
+            boolean badHeadshot
     ) {
         String hpText = String.format("%.1f / %.1f HP", health, maxHealth);
         String armorText = armorToughness > 0.0D
@@ -108,8 +110,12 @@ public class TargetHud extends AbstractModule {
                 : "DEF: " + armor;
         String distanceText = String.format("%.1f m", distance);
 
-        graphics.text(mc.font, name, x + 8, y + 7, 0xFFFFFFFF, true);
+        int nameColor = badHeadshot ? 0xFFFF5555 : 0xFFFFFFFF;
+        graphics.text(mc.font, name, x + 8, y + 7, nameColor, true);
         graphics.text(mc.font, hpText, x + 8, y + 18, 0xFFFF5555, true);
+        if (badHeadshot) {
+            graphics.text(mc.font, "BAD", x + 105, y + 7, 0xFFFF5555, true);
+        }
         graphics.text(mc.font, distanceText, x + 105, y + 18, 0xFFAAAAAA, true);
 //        graphics.text(mc.font, armorText, x + 8, y + 42, 0xFF55AAFF, true);
     }

@@ -3,6 +3,7 @@ package com.example.client.module.modules;
 import com.darkmagician6.eventapi.EventTarget;
 import com.example.client.ZombiesModClient;
 import com.example.client.events.EntityLoadEvent;
+import com.example.client.events.RenderEvent;
 import com.example.client.events.TickEvent;
 import com.example.client.language.Language;
 import com.example.client.language.Text;
@@ -14,6 +15,8 @@ import com.example.client.setting.settings.ColorSetting;
 import com.example.client.setting.settings.NumberSetting;
 import com.example.client.tracker.ServerTracker;
 import com.example.client.utils.PlayerUtils;
+import com.example.client.utils.render.WorldToScreen;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.Entity;
@@ -34,7 +37,7 @@ import java.util.Set;
 
 @ModuleInfo(name = {
         @Text(label = "Bad Headshot", language = Language.English),
-        @Text(label = "爆头提示", language = Language.Chinese)
+        @Text(label = "无法暴击提示", language = Language.Chinese)
 }, enable = false)
 public class BadHeadshot extends AbstractModule {
 
@@ -54,7 +57,7 @@ public class BadHeadshot extends AbstractModule {
             @Text(label = "Target Color", language = Language.English),
             @Text(label = "目标颜色", language = Language.Chinese)
     })
-    public static final ColorSetting targetColor = new ColorSetting(new Color(85, 255, 85, 255));
+    public static final ColorSetting targetColor = new ColorSetting(new Color(255, 85, 85, 255));
 
     @SettingInfo(name = {
             @Text(label = "Line Color", language = Language.English),
@@ -112,21 +115,53 @@ public class BadHeadshot extends AbstractModule {
         updateLineMobs();
     }
 
-    public static int tintFor(Entity entity) {
-        if (!(entity instanceof LivingEntity living) || !isAllowed()) {
-            return 0;
+    @EventTarget
+    public void onRender(RenderEvent event) {
+        if (mc.player == null || mc.level == null || !isAllowed()) {
+            return;
         }
+
+        float partialTicks = event.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        GuiGraphicsExtractor graphics = event.getGuiGraphicsExtractor();
 
         LivingEntity target = currentTarget();
-        if (target == living) {
-            return targetColor.getValue().getRGB();
+        if (target != null) {
+            drawLabel(graphics, target, "BAD HEADSHOT", targetColor.getValue().getRGB(), partialTicks);
         }
 
-        if (lineMobIds.contains(living.getId())) {
-            return lineColor.getValue().getRGB();
+        for (LivingEntity mob : trackedMobs) {
+            if (mob != target && lineMobIds.contains(mob.getId())) {
+                drawLabel(graphics, mob, "BLOCKING", lineColor.getValue().getRGB(), partialTicks);
+            }
+        }
+    }
+
+    public static boolean isBadHeadshotEntity(Entity entity) {
+        return entity instanceof LivingEntity living
+                && isAllowed()
+                && currentTarget() == living;
+    }
+
+    public static boolean isLineEntity(Entity entity) {
+        return entity instanceof LivingEntity living
+                && isAllowed()
+                && lineMobIds.contains(living.getId());
+    }
+
+    private static void drawLabel(GuiGraphicsExtractor graphics, LivingEntity entity, String text, int color, float partialTicks) {
+        if (!isAliveTrackedMob(entity)) {
+            return;
         }
 
-        return 0;
+        WorldToScreen.ScreenPos pos = WorldToScreen.projectEntity(entity, partialTicks);
+        if (pos == null) {
+            return;
+        }
+
+        int textWidth = mc.font.width(text);
+        int x = Math.round(pos.x() - textWidth / 2.0F);
+        int y = Math.round(pos.y()) - 12;
+        graphics.text(mc.font, text, x, y, color, true);
     }
 
     private static void updateLineMobs() {

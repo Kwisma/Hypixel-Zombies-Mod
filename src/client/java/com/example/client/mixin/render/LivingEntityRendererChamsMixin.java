@@ -2,9 +2,7 @@ package com.example.client.mixin.render;
 
 import com.example.client.ZombiesModClient;
 import com.example.client.module.AbstractModule;
-import com.example.client.module.modules.BadHeadshot;
 import com.example.client.module.modules.ZombieChams;
-import com.example.client.utils.BadHeadshotState;
 import com.example.client.utils.ChamsState;
 import com.example.client.utils.HideEntityState;
 import com.example.client.utils.PlayerUtils;
@@ -33,12 +31,8 @@ public class LivingEntityRendererChamsMixin {
     // 抽取阶段拿得到实体，判断是否 chams 目标，写进 render state
     @Inject(method = "extractRenderState", at = @At("TAIL"))
     private void zombiesmod$flagChams(LivingEntity entity, LivingEntityRenderState state, float partialTicks, CallbackInfo ci) {
-        int badHeadshotTint = BadHeadshot.tintFor(entity);
         if (state instanceof ChamsState cs) {
-            cs.zombiesmod$setChams(zombiesmod$isChamsTarget(entity) || badHeadshotTint != 0);
-        }
-        if (state instanceof BadHeadshotState badHeadshotState) {
-            badHeadshotState.zombiesmod$setBadHeadshotTint(badHeadshotTint);
+            cs.zombiesmod$setChams(zombiesmod$isChamsTarget(entity));
         }
     }
 
@@ -66,16 +60,6 @@ public class LivingEntityRendererChamsMixin {
                 && (!(state instanceof HideEntityState hideState) || !hideState.zombiesmod$isFaded())) {
             Identifier texture = ((LivingEntityRenderer) (Object) this).getTextureLocation(state);
             cir.setReturnValue(ChamsRenderType.noDepth(texture));
-        }
-    }
-
-    @Inject(method = "getModelTint", at = @At("HEAD"), cancellable = true)
-    private void zombiesmod$badHeadshotTint(LivingEntityRenderState state, CallbackInfoReturnable<Integer> cir) {
-        if (state instanceof BadHeadshotState badHeadshotState) {
-            int tint = badHeadshotState.zombiesmod$getBadHeadshotTint();
-            if (tint != 0) {
-                cir.setReturnValue(tint);
-            }
         }
     }
 
