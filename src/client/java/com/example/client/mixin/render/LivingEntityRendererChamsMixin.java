@@ -61,7 +61,7 @@ public class LivingEntityRendererChamsMixin {
             double halfWidth = width / 2.0D;
             collector.submitCustomGeometry(
                     poseStack,
-                    RenderTypes.lines(),
+                    RenderTypes.debugQuads(),
                     (pose, consumer) -> zombiesmod$drawBox(
                             pose.pose(),
                             consumer,
@@ -109,37 +109,77 @@ public class LivingEntityRendererChamsMixin {
                                            float minX, float minY, float minZ,
                                            float maxX, float maxY, float maxZ,
                                            int color) {
-        zombiesmod$line(pose, consumer, minX, minY, minZ, maxX, minY, minZ, color);
-        zombiesmod$line(pose, consumer, minX, minY, maxZ, maxX, minY, maxZ, color);
-        zombiesmod$line(pose, consumer, minX, maxY, minZ, maxX, maxY, minZ, color);
-        zombiesmod$line(pose, consumer, minX, maxY, maxZ, maxX, maxY, maxZ, color);
+        float thickness = 0.018F;
 
-        zombiesmod$line(pose, consumer, minX, minY, minZ, minX, minY, maxZ, color);
-        zombiesmod$line(pose, consumer, maxX, minY, minZ, maxX, minY, maxZ, color);
-        zombiesmod$line(pose, consumer, minX, maxY, minZ, minX, maxY, maxZ, color);
-        zombiesmod$line(pose, consumer, maxX, maxY, minZ, maxX, maxY, maxZ, color);
+        zombiesmod$xEdge(pose, consumer, minX, maxX, minY, minZ, thickness, color);
+        zombiesmod$xEdge(pose, consumer, minX, maxX, minY, maxZ, thickness, color);
+        zombiesmod$xEdge(pose, consumer, minX, maxX, maxY, minZ, thickness, color);
+        zombiesmod$xEdge(pose, consumer, minX, maxX, maxY, maxZ, thickness, color);
 
-        zombiesmod$line(pose, consumer, minX, minY, minZ, minX, maxY, minZ, color);
-        zombiesmod$line(pose, consumer, maxX, minY, minZ, maxX, maxY, minZ, color);
-        zombiesmod$line(pose, consumer, minX, minY, maxZ, minX, maxY, maxZ, color);
-        zombiesmod$line(pose, consumer, maxX, minY, maxZ, maxX, maxY, maxZ, color);
+        zombiesmod$zEdge(pose, consumer, minZ, maxZ, minX, minY, thickness, color);
+        zombiesmod$zEdge(pose, consumer, minZ, maxZ, maxX, minY, thickness, color);
+        zombiesmod$zEdge(pose, consumer, minZ, maxZ, minX, maxY, thickness, color);
+        zombiesmod$zEdge(pose, consumer, minZ, maxZ, maxX, maxY, thickness, color);
+
+        zombiesmod$yEdge(pose, consumer, minY, maxY, minX, minZ, thickness, color);
+        zombiesmod$yEdge(pose, consumer, minY, maxY, maxX, minZ, thickness, color);
+        zombiesmod$yEdge(pose, consumer, minY, maxY, minX, maxZ, thickness, color);
+        zombiesmod$yEdge(pose, consumer, minY, maxY, maxX, maxZ, thickness, color);
     }
 
     @Unique
-    private static void zombiesmod$line(Matrix4f pose, VertexConsumer consumer,
+    private static void zombiesmod$xEdge(Matrix4f pose, VertexConsumer consumer,
+                                         float minX, float maxX, float y, float z,
+                                         float thickness, int color) {
+        zombiesmod$cuboid(pose, consumer,
+                minX, y - thickness, z - thickness,
+                maxX, y + thickness, z + thickness,
+                color);
+    }
+
+    @Unique
+    private static void zombiesmod$yEdge(Matrix4f pose, VertexConsumer consumer,
+                                         float minY, float maxY, float x, float z,
+                                         float thickness, int color) {
+        zombiesmod$cuboid(pose, consumer,
+                x - thickness, minY, z - thickness,
+                x + thickness, maxY, z + thickness,
+                color);
+    }
+
+    @Unique
+    private static void zombiesmod$zEdge(Matrix4f pose, VertexConsumer consumer,
+                                         float minZ, float maxZ, float x, float y,
+                                         float thickness, int color) {
+        zombiesmod$cuboid(pose, consumer,
+                x - thickness, y - thickness, minZ,
+                x + thickness, y + thickness, maxZ,
+                color);
+    }
+
+    @Unique
+    private static void zombiesmod$cuboid(Matrix4f pose, VertexConsumer consumer,
+                                          float minX, float minY, float minZ,
+                                          float maxX, float maxY, float maxZ,
+                                          int color) {
+        zombiesmod$quad(pose, consumer, minX, minY, minZ, maxX, minY, minZ, maxX, maxY, minZ, minX, maxY, minZ, color);
+        zombiesmod$quad(pose, consumer, minX, minY, maxZ, minX, maxY, maxZ, maxX, maxY, maxZ, maxX, minY, maxZ, color);
+        zombiesmod$quad(pose, consumer, minX, minY, minZ, minX, maxY, minZ, minX, maxY, maxZ, minX, minY, maxZ, color);
+        zombiesmod$quad(pose, consumer, maxX, minY, minZ, maxX, minY, maxZ, maxX, maxY, maxZ, maxX, maxY, minZ, color);
+        zombiesmod$quad(pose, consumer, minX, minY, minZ, minX, minY, maxZ, maxX, minY, maxZ, maxX, minY, minZ, color);
+        zombiesmod$quad(pose, consumer, minX, maxY, minZ, maxX, maxY, minZ, maxX, maxY, maxZ, minX, maxY, maxZ, color);
+    }
+
+    @Unique
+    private static void zombiesmod$quad(Matrix4f pose, VertexConsumer consumer,
                                         float x1, float y1, float z1,
                                         float x2, float y2, float z2,
+                                        float x3, float y3, float z3,
+                                        float x4, float y4, float z4,
                                         int color) {
-        float nx = x2 - x1;
-        float ny = y2 - y1;
-        float nz = z2 - z1;
-        float len = (float) Math.sqrt(nx * nx + ny * ny + nz * nz);
-        if (len > 0.0F) {
-            nx /= len;
-            ny /= len;
-            nz /= len;
-        }
-        consumer.addVertex(pose, x1, y1, z1).setColor(color).setNormal(nx, ny, nz);
-        consumer.addVertex(pose, x2, y2, z2).setColor(color).setNormal(nx, ny, nz);
+        consumer.addVertex(pose, x1, y1, z1).setColor(color);
+        consumer.addVertex(pose, x2, y2, z2).setColor(color);
+        consumer.addVertex(pose, x3, y3, z3).setColor(color);
+        consumer.addVertex(pose, x4, y4, z4).setColor(color);
     }
 }
