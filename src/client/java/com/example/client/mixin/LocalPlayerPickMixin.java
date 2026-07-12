@@ -1,7 +1,6 @@
 package com.example.client.mixin;
 
 import com.example.client.module.modules.HologramFix;
-import com.example.client.utils.PlayerUtils;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.decoration.ArmorStand;
@@ -23,8 +22,7 @@ public class LocalPlayerPickMixin {
             index = 4
     )
     private static Predicate<Entity> zombiesmod$ignoreHolograms(Predicate<Entity> original) {
-        if (!HologramFix.isActive()) return original;
-        if (HologramFix.onlyGame.getValue() && !PlayerUtils.isInHypZombies()) return original;
+        if (!HologramFix.isActiveInCurrentGame()) return original;
         // 在原过滤器（EntitySelector.CAN_BE_PICKED）基础上再排除所有盔甲架（隐形全息字）。
         return original.and(e -> !(e instanceof ArmorStand));
     }

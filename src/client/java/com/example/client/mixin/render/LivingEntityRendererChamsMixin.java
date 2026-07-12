@@ -79,11 +79,10 @@ public class LivingEntityRendererChamsMixin {
 
     @Inject(method = "submit", at = @At("RETURN"))
     private void zombiesmod$chamsSubmitEnd(LivingEntityRenderState state, PoseStack poseStack,
-                                           SubmitNodeCollector collector, CameraRenderState camera, CallbackInfo ci) {
+                                            SubmitNodeCollector collector, CameraRenderState camera, CallbackInfo ci) {
         ChamsRenderType.active = false;
     }
 
-    // 本体兜底：即使本体模型用了非 RenderTypes 的类型，也直接换成无深度
     @Inject(method = "getRenderType", at = @At("HEAD"), cancellable = true)
     private void zombiesmod$chamsType(LivingEntityRenderState state, boolean isBodyVisible, boolean forceTransparent,
                                        boolean appearGlowing, CallbackInfoReturnable<RenderType> cir) {
@@ -139,7 +138,7 @@ public class LivingEntityRendererChamsMixin {
             ny /= len;
             nz /= len;
         }
-        consumer.addVertex(pose, x1, y1, z1).setColor(color).setNormal(nx, ny, nz);
-        consumer.addVertex(pose, x2, y2, z2).setColor(color).setNormal(nx, ny, nz);
+        consumer.addVertex(pose, x1, y1, z1).setColor(color).setNormal(nx, ny, nz).setLineWidth(1.0F);
+        consumer.addVertex(pose, x2, y2, z2).setColor(color).setNormal(nx, ny, nz).setLineWidth(1.0F);
     }
 }

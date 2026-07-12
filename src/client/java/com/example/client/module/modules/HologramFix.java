@@ -7,6 +7,7 @@ import com.example.client.module.AbstractModule;
 import com.example.client.module.annotation.ModuleInfo;
 import com.example.client.setting.annotation.SettingInfo;
 import com.example.client.setting.settings.BooleanSetting;
+import com.example.client.utils.PlayerUtils;
 
 /**
  * 全息字穿透（类似 ZHF / Zombies Holograms-bug Fix）。
@@ -31,8 +32,20 @@ public class HologramFix extends AbstractModule {
     })
     public static final BooleanSetting onlyGame = new BooleanSetting(true);
 
+    @SettingInfo(name = {
+            @Text(label = "Ignore Block Reactions", language = Language.English),
+            @Text(label = "忽略方块右键反应", language = Language.Chinese)
+    })
+    public static final BooleanSetting ignoreBlockReactions = new BooleanSetting(false);
+
+    @SettingInfo(name = {
+            @Text(label = "Disable Right Click Swinging", language = Language.English),
+            @Text(label = "禁用右键挥手", language = Language.Chinese)
+    })
+    public static final BooleanSetting disableRightClickSwinging = new BooleanSetting(false);
+
     public HologramFix() {
-        registerSetting(onlyGame);
+        registerSetting(onlyGame, ignoreBlockReactions, disableRightClickSwinging);
     }
 
     /** 供 mixin 静态查询：模块是否启用。moduleManager 早期可能为 null，需判空。 */
@@ -40,5 +53,9 @@ public class HologramFix extends AbstractModule {
         if (ZombiesModClient.moduleManager == null) return false;
         AbstractModule m = ZombiesModClient.moduleManager.getModule("Hologram Fix");
         return m != null && m.isEnable();
+    }
+
+    public static boolean isActiveInCurrentGame() {
+        return isActive() && (!onlyGame.getValue() || PlayerUtils.isInHypZombies());
     }
 }

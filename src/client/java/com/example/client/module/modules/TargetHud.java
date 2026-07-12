@@ -24,11 +24,18 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.awt.Color;
+
 @ModuleInfo(name = {
         @Text(label = "Target Hud", language = Language.English),
         @Text(label = "目标Hud显示", language = Language.Chinese)
 }, enable = true)
 public class TargetHud extends AbstractModule {
+    private static final Color NORMAL_BACKGROUND = new Color(17, 17, 17, 170);
+    private static final Color NORMAL_BORDER = new Color(68, 68, 68, 255);
+    private static final Color BAD_HEADSHOT_BACKGROUND = new Color(120, 16, 16, 190);
+    private static final Color BAD_HEADSHOT_BORDER = new Color(255, 85, 85, 255);
+
     @SettingInfo(name = {
             @Text(label = "Distance", language = Language.English),
             @Text(label = "距离", language = Language.Chinese)
@@ -82,15 +89,28 @@ public class TargetHud extends AbstractModule {
         }
 
         double distance = mc.player.distanceTo(target);
+        boolean badHeadshot = BadHeadshot.isBadHeadshotEntity(target);
         BlurRenderer.draw(event.getGuiGraphicsExtractor(),  x, y, width, height,10);
-        GuiGraphicsUtils.drawBackground(event.getGuiGraphicsExtractor(), x, y, width, height);
+        drawBackground(event.getGuiGraphicsExtractor(), x, y, width, height, badHeadshot);
         drawText(event.getGuiGraphicsExtractor(), x, y, name, health, maxHealth, armor, armorToughness, distance,
-                BadHeadshot.isBadHeadshotEntity(target));
+                badHeadshot);
 
         GuiGraphicsUtils.drawHealthBar(event.getGuiGraphicsExtractor(), x + 8, y + 32, width - 16, 8, percent);
 //        GuiGraphicsUtils.drawArmorBar(event.getGuiGraphicsExtractor(), x + 8, y + 50, width - 16, 8, armorPercent);
     }
 
+    public static void drawBackground(GuiGraphicsExtractor graphics, int x, int y, int width, int height, boolean badHeadshot) {
+        Color background = badHeadshot ? BAD_HEADSHOT_BACKGROUND : NORMAL_BACKGROUND;
+        Color border = badHeadshot ? BAD_HEADSHOT_BORDER : NORMAL_BORDER;
+
+        graphics.fill(x, y, x + width, y + height, background.getRGB());
+
+
+        graphics.fill(x, y, x + width, y + 1, border.getRGB());
+        graphics.fill(x, y + height - 1, x + width, y + height, border.getRGB());
+        graphics.fill(x, y, x + 1, y + height, border.getRGB());
+        graphics.fill(x + width - 1, y, x + width, y + height, border.getRGB());
+    }
 
     private static void drawText(
             GuiGraphicsExtractor graphics,
@@ -110,12 +130,10 @@ public class TargetHud extends AbstractModule {
                 : "DEF: " + armor;
         String distanceText = String.format("%.1f m", distance);
 
-        int nameColor = badHeadshot ? 0xFFFF5555 : 0xFFFFFFFF;
+        int nameColor = 0xFFFFFFFF;
         graphics.text(mc.font, name, x + 8, y + 7, nameColor, true);
         graphics.text(mc.font, hpText, x + 8, y + 18, 0xFFFF5555, true);
-        if (badHeadshot) {
-            graphics.text(mc.font, "BAD", x + 105, y + 7, 0xFFFF5555, true);
-        }
+
         graphics.text(mc.font, distanceText, x + 105, y + 18, 0xFFAAAAAA, true);
 //        graphics.text(mc.font, armorText, x + 8, y + 42, 0xFF55AAFF, true);
     }

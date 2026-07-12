@@ -45,6 +45,12 @@ public class BadHeadshot extends AbstractModule {
     public static final BooleanSetting onlyGame = new BooleanSetting(true);
 
     @SettingInfo(name = {
+            @Text(label = "Singleplayer Debug Box", language = Language.English),
+            @Text(label = "单人调试框", language = Language.Chinese)
+    })
+    public static final BooleanSetting singleplayerDebugBox = new BooleanSetting(false);
+
+    @SettingInfo(name = {
             @Text(label = "Distance", language = Language.English),
             @Text(label = "检测距离", language = Language.Chinese)
     })
@@ -64,12 +70,13 @@ public class BadHeadshot extends AbstractModule {
 
     private static final List<LivingEntity> trackedMobs = new ArrayList<>();
     private static final Set<Integer> lineMobIds = new HashSet<>();
+    private static LivingEntity debugTarget;
 
     private static ClientLevel lastLevel;
     private static int lastRound = -1;
 
     public BadHeadshot() {
-        registerSetting(onlyGame, distance, targetColor, lineColor);
+        registerSetting(onlyGame, singleplayerDebugBox, distance, targetColor, lineColor);
     }
 
     @Override
@@ -108,6 +115,7 @@ public class BadHeadshot extends AbstractModule {
             lastRound = ServerTracker.currentRound;
         }
 
+        updateDebugTarget();
         cleanupDeadMobs();
         updateLineMobs();
     }
@@ -187,10 +195,25 @@ public class BadHeadshot extends AbstractModule {
 
     private static LivingEntity currentTarget() {
         cleanupDeadMobs();
+        if (isSingleplayerDebug()) {
+            return isAliveTrackedMob(debugTarget) ? debugTarget : null;
+        }
+
         if (trackedMobs.isEmpty()) {
             return null;
         }
         return trackedMobs.get(trackedMobs.size() - 1);
+    }
+
+    private static void updateDebugTarget() {
+        if (!isSingleplayerDebug()) {
+            debugTarget = null;
+            return;
+        }
+
+        debugTarget = PlayerUtils.raycastTarget(distance.getValue().doubleValue(), entity -> {
+            return entity instanceof LivingEntity living && isTrackedMob(living);
+        });
     }
 
     private static void cleanupDeadMobs() {
@@ -228,11 +251,18 @@ public class BadHeadshot extends AbstractModule {
             return false;
         }
 
-        return !onlyGame.getValue() || PlayerUtils.isInHypZombies();
+        return isSingleplayerDebug() || !onlyGame.getValue() || PlayerUtils.isInHypZombies();
+    }
+
+    private static boolean isSingleplayerDebug() {
+        return singleplayerDebugBox.getValue()
+                && mc != null
+                && mc.hasSingleplayerServer();
     }
 
     private static void clear() {
         trackedMobs.clear();
         lineMobIds.clear();
+        debugTarget = null;
     }
 }
