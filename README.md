@@ -11,11 +11,18 @@
 
 ## Screenshot
 
-![截图](assets/screenshot.png)
+### 主界面
+![截图](assets/1.png)
+
+### 玩家战绩查询
+![截图](assets/2.png)
+
+### AutoSwitch配置界面
+![截图](assets/3.png)
 
 ## Features
 
-### Combat / Gun
+### Combat
 
 | Module | 功能 |
 | --- | --- |
