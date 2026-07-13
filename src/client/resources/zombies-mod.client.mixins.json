@@ -17,6 +17,7 @@
     "render.EntityRendererMixin",
     "EquipmentLayerRendererMixin",
     "HumanoidArmorLayerMixin",
+    "CustomHeadLayerMixin",
     "KeyboardHandlerMixin",
     "MouseHandlerInvoker",
     "render.LivingEntityRendererMixin",

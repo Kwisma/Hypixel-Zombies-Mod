@@ -9,6 +9,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.golem.IronGolem;
 import net.minecraft.world.entity.animal.wolf.Wolf;
 import net.minecraft.world.entity.monster.Slime;
+import net.minecraft.world.entity.monster.skeleton.Skeleton;
 import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
@@ -41,6 +42,10 @@ public class HidePlayerHelper implements IMinecraft {
     }
 
     public static boolean shouldFade(Slime target) {
+        return shouldFadeZombieLike(target);
+    }
+
+    public static boolean shouldFade(Skeleton target) {
         return shouldFadeZombieLike(target);
     }
 
@@ -98,6 +103,7 @@ public class HidePlayerHelper implements IMinecraft {
     public static boolean isHideZombieTarget(LivingEntity target) {
         return target instanceof Zombie
                 || target instanceof Slime
+                || target instanceof Skeleton
                 || target instanceof IronGolem
                 || target instanceof Wolf;
     }

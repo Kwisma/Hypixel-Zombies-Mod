@@ -83,6 +83,7 @@ public class LivingEntityRendererChamsMixin {
         ChamsRenderType.active = false;
     }
 
+    // 本体兜底：即使本体模型用了非 RenderTypes 的类型，也直接换成无深度
     @Inject(method = "getRenderType", at = @At("HEAD"), cancellable = true)
     private void zombiesmod$chamsType(LivingEntityRenderState state, boolean isBodyVisible, boolean forceTransparent,
                                        boolean appearGlowing, CallbackInfoReturnable<RenderType> cir) {

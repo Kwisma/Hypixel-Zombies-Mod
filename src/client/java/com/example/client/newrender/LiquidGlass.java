@@ -27,24 +27,6 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
-/**
- * 液态玻璃面板（移植自 1.8.9 LiquidGlassShader 的思路，重写到 26.1.2 新 blaze3d 管线）。
- *
- * 流程（每帧）：
- *   1) 把主帧缓冲的颜色拷一份快照（避免一边读一边写的反馈环）；
- *   2) 用自定义 RenderPipeline + 手动 RenderPass，在面板矩形处画一个 quad，
- *      片元着色器采样快照做：磨砂模糊 + 折射 + 色散 + 圆角 SDF + 染色 + 边缘高光。
- *
- * 着色器：assets/zombies-mod/shaders/core/liquid_glass.{vsh,fsh}
- *
- * ⚠️ 我无法在本机编译你的环境，下面这些“低层常量/签名”是按反编译出来的 API 形状写的最佳猜测，
- *    编译/运行报错时优先核对这几处（已用  // VERIFY  标注）：
- *      - GpuTexture / GpuBuffer 的 usage 标志常量名
- *      - device.createTexture / createSampler / createBuffer 的参数顺序与含义
- *      - 自定义顶点格式（DefaultVertexFormat.POSITION）+ 顶点着色器里的 in 名 "Position"
- *      - 混合(blend)：当前没设，半透明(uAlpha<1)可能不生效，需要在 builder 上加 blend 状态
- *      - UBO 的 std140 打包是否和 fsh 里的 layout 完全一致
- */
 public final class LiquidGlass {
     private LiquidGlass() {}
 
