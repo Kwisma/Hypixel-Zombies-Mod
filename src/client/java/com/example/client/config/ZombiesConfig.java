@@ -14,7 +14,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ZombiesConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -24,8 +26,107 @@ public class ZombiesConfig {
     /** Hypixel API key（战绩查询用） */
     public static String apiKey = "";
 
-    /** 被保护的名字列表（显示为 Player1/Player2…） */
+    /** 被保护的名字列表（未自定义时显示为 Player1/Player2…） */
     public static final List<String> protectedNames = new ArrayList<>();
+
+    /** 每个受保护名字的显示设置；key 为名单里的真实用户名。 */
+    public static final Map<String, NameProtectSettings> protectedNameSettings = new LinkedHashMap<>();
+
+    public static final class NameProtectSettings {
+        /** 是否替换玩家名字本身；关闭后只保留前缀替换/颜色设置。 */
+        private boolean renameName = true;
+        private String customName = "";
+        /** -1 代表沿用服务器/原文字颜色；其他值为 0xRRGGBB。 */
+        private int nameColor = -1;
+        /** -1 代表沿用原 rank 颜色；其他值只用于 '[' 和 ']'。 */
+        private int bracketColor = -1;
+        /** -1 代表沿用原 rank 颜色；其他值只用于 VIP/MVP 等 rank 字母。 */
+        private int rankTextColor = -1;
+        /** -1 代表沿用原 rank 颜色；其他值只用于 rank 中的 '+'。 */
+        private int plusColor = -1;
+        /** 空字符串代表保留原 Hypixel rank 前缀。 */
+        private String prefix = "";
+
+        public boolean isRenameName() {
+            return renameName;
+        }
+
+        public void setRenameName(boolean renameName) {
+            this.renameName = renameName;
+        }
+
+        public String getCustomName() {
+            return customName;
+        }
+
+        public void setCustomName(String customName) {
+            this.customName = customName == null ? "" : customName.trim();
+        }
+
+        public int getNameColor() {
+            return nameColor;
+        }
+
+        public void setNameColor(int nameColor) {
+            this.nameColor = nameColor;
+        }
+
+        public int getBracketColor() {
+            return bracketColor;
+        }
+
+        public void setBracketColor(int bracketColor) {
+            this.bracketColor = bracketColor;
+        }
+
+        public int getRankTextColor() {
+            return rankTextColor;
+        }
+
+        public void setRankTextColor(int rankTextColor) {
+            this.rankTextColor = rankTextColor;
+        }
+
+        public int getPlusColor() {
+            return plusColor;
+        }
+
+        public void setPlusColor(int plusColor) {
+            this.plusColor = plusColor;
+        }
+
+        public String getPrefix() {
+            return prefix;
+        }
+
+        public void setPrefix(String prefix) {
+            this.prefix = prefix == null ? "" : prefix.trim();
+        }
+    }
+
+    public static NameProtectSettings getNameProtectSettings(String name) {
+        for (Map.Entry<String, NameProtectSettings> entry : protectedNameSettings.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase(name)) {
+                return entry.getValue();
+            }
+        }
+        NameProtectSettings settings = new NameProtectSettings();
+        protectedNameSettings.put(name, settings);
+        return settings;
+    }
+
+    public static NameProtectSettings findNameProtectSettings(String name) {
+        for (Map.Entry<String, NameProtectSettings> entry : protectedNameSettings.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase(name)) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    public static void removeNameProtectSettings(String name) {
+        protectedNameSettings.keySet().removeIf(key -> key.equalsIgnoreCase(name));
+    }
 
 
 
@@ -57,6 +158,24 @@ public class ZombiesConfig {
                 protectedNames.clear();
                 for (JsonElement el : root.getAsJsonArray("protectedNames")) {
                     protectedNames.add(el.getAsString());
+                }
+            }
+
+            protectedNameSettings.clear();
+            if (root.has("protectedNameSettings") && root.get("protectedNameSettings").isJsonObject()) {
+                JsonObject settingsJson = root.getAsJsonObject("protectedNameSettings");
+                for (Map.Entry<String, JsonElement> entry : settingsJson.entrySet()) {
+                    if (!entry.getValue().isJsonObject()) continue;
+                    JsonObject item = entry.getValue().getAsJsonObject();
+                    NameProtectSettings settings = new NameProtectSettings();
+                    if (item.has("renameName")) settings.setRenameName(item.get("renameName").getAsBoolean());
+                    if (item.has("customName")) settings.setCustomName(item.get("customName").getAsString());
+                    if (item.has("nameColor")) settings.setNameColor(item.get("nameColor").getAsInt());
+                    if (item.has("bracketColor")) settings.setBracketColor(item.get("bracketColor").getAsInt());
+                    if (item.has("rankTextColor")) settings.setRankTextColor(item.get("rankTextColor").getAsInt());
+                    if (item.has("plusColor")) settings.setPlusColor(item.get("plusColor").getAsInt());
+                    if (item.has("prefix")) settings.setPrefix(item.get("prefix").getAsString());
+                    protectedNameSettings.put(entry.getKey(), settings);
                 }
             }
 
@@ -144,6 +263,21 @@ public class ZombiesConfig {
             JsonArray namesArr = new JsonArray();
             for (String n : protectedNames) namesArr.add(n);
             root.add("protectedNames", namesArr);
+
+            JsonObject nameProtectJson = new JsonObject();
+            for (Map.Entry<String, NameProtectSettings> entry : protectedNameSettings.entrySet()) {
+                NameProtectSettings settings = entry.getValue();
+                JsonObject item = new JsonObject();
+                item.addProperty("renameName", settings.isRenameName());
+                item.addProperty("customName", settings.getCustomName());
+                item.addProperty("nameColor", settings.getNameColor());
+                item.addProperty("bracketColor", settings.getBracketColor());
+                item.addProperty("rankTextColor", settings.getRankTextColor());
+                item.addProperty("plusColor", settings.getPlusColor());
+                item.addProperty("prefix", settings.getPrefix());
+                nameProtectJson.add(entry.getKey(), item);
+            }
+            root.add("protectedNameSettings", nameProtectJson);
 
             JsonObject modulesJson = new JsonObject();
 

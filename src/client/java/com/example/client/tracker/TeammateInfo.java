@@ -49,6 +49,8 @@ public class TeammateInfo {
 
     /** 快速复活窗口结束的时间戳（毫秒）；被救起时设为 now+5000。0/过期 = 无。 */
     private long fastReviveEndMs;
+    /** 快速复活窗口的总时长，用于 HUD 绘制准确的冷却进度。 */
+    private long fastReviveDurationMs;
 
     public TeammateInfo(String name) {
         this.name = name;
@@ -56,7 +58,8 @@ public class TeammateInfo {
 
     /** 被救起时调用，开始 durationMs 毫秒的快速复活倒计时。 */
     public void startFastRevive(long durationMs) {
-        this.fastReviveEndMs = System.currentTimeMillis() + durationMs;
+        this.fastReviveDurationMs = Math.max(0L, durationMs);
+        this.fastReviveEndMs = System.currentTimeMillis() + fastReviveDurationMs;
     }
 
     public boolean isFastReviveActive() {
@@ -69,12 +72,56 @@ public class TeammateInfo {
         return left > 0 ? left / 1000.0 : 0.0;
     }
 
+    /** 快速复活冷却剩余比例：刚开始为 1，到期为 0。 */
+    public float getFastReviveProgress() {
+        if (fastReviveDurationMs <= 0L) return 0.0F;
+        long left = Math.max(0L, fastReviveEndMs - System.currentTimeMillis());
+        return Math.clamp((float) left / fastReviveDurationMs, 0.0F, 1.0F);
+    }
+
     public void clearFastRevive() {
         fastReviveEndMs = 0L;
+        fastReviveDurationMs = 0L;
     }
 
     public boolean isTerminalState() {
         return playerState == PlayerState.TERMINAL;
+    }
+
+    /**
+     * 将计分板的状态应用到队友。QUIT/DEAD 不会被临时 REVIVE 行覆盖，
+     * 但计分板恢复为金币数（ALIVE）时，说明该玩家已经重新加入，需要解除终止状态。
+     */
+    public void applyScoreboardState(PlayerState observedState, String observedStatusText) {
+        if (observedState == PlayerState.TERMINAL) {
+            playerState = PlayerState.TERMINAL;
+            if (observedStatusText != null && !observedStatusText.isBlank()) {
+                statusText = observedStatusText;
+            }
+            isDown = false;
+            return;
+        }
+
+        if (playerState == PlayerState.TERMINAL) {
+            if (observedState != PlayerState.ALIVE) {
+                return;
+            }
+            clearTerminalAfterReconnect();
+        }
+
+        playerState = observedState;
+        statusText = observedStatusText == null ? "" : observedStatusText;
+        isDown = observedState == PlayerState.DOWN;
+    }
+
+    /** TAB 中重新出现同名真实玩家实体时调用，处理计分板状态仍滞后一两帧的重连。 */
+    public void clearTerminalAfterReconnect() {
+        playerState = PlayerState.ALIVE;
+        statusText = "";
+        isDown = false;
+        beingRevived = false;
+        reviveSeconds = 0.0;
+        clearFastRevive();
     }
 
     public static TeammateInfo[] teammates = new TeammateInfo[0];

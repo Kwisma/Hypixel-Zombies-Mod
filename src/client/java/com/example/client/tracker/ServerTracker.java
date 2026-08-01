@@ -12,6 +12,7 @@ import com.example.client.events.SoundPacketEvent;
 import com.example.client.events.TickEvent;
 import com.example.client.module.AbstractModule;
 import com.example.client.module.modules.DPSCounter;
+import com.example.client.module.modules.Cs2RoundHud;
 import com.example.client.module.modules.Notification;
 import com.example.client.module.modules.TargetHud;
 import com.example.client.utils.*;
@@ -122,19 +123,22 @@ public class ServerTracker implements IMinecraft {
             roundStartSound = false;
 
             int lastRound = currentRound - 1;
+            long roundGoldDelta = 0L;
 
             // 上回合金币变化：从计分板读我当前金币，与上回合开始时的快照对比
             long myGold = getMyScoreboardGold();
             if (myGold >= 0) {
                 if (lastRound >= 1 && lastRoundStartGold >= 0) {
-                    long delta = myGold - lastRoundStartGold;
-                    String sign = delta >= 0 ? "+" : "-";
+                    roundGoldDelta = myGold - lastRoundStartGold;
+                    String sign = roundGoldDelta >= 0 ? "+" : "-";
                     ChatUtils.print(Component.literal("Round " + lastRound).withStyle(ChatFormatting.RED)
                             .append(Component.literal(" 金币 ").withStyle(ChatFormatting.YELLOW))
-                            .append(Component.literal(sign + String.format("%,d", Math.abs(delta))).withStyle(ChatFormatting.GOLD)));
+                            .append(Component.literal(sign + String.format("%,d", Math.abs(roundGoldDelta))).withStyle(ChatFormatting.GOLD)));
                 }
                 lastRoundStartGold = myGold;
             }
+
+            Cs2RoundHud.showRoundWin(lastRound, roundGoldDelta);
 
             long time = System.currentTimeMillis() - roundTime;
             String timeStr = formatSeconds((int) (time / 1000L));

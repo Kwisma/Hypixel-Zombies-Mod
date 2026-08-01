@@ -1,7 +1,6 @@
 package com.example.client.utils;
 
 import com.example.client.tracker.TeammateInfo;
-import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.world.scores.*;
@@ -78,19 +77,41 @@ public class ScoreboardUtils implements IMinecraft {
         return out;
     }
 
-    /** 右侧状态位于计分板行末；只按最后一个显式文字颜色判断终止状态。 */
+    /**
+     * QUIT/DEAD 的判据只取冒号后的状态文字颜色。不能检查整行：玩家名、
+     * rank 或其他前缀也可能带红色，而 REVIVE 状态本身仍是白色。
+     *
+     * <p>服务器会把一行文本拆成多个 Component，因此按扁平化后的文字段
+     * 依次累计字符位置；只要状态区域中存在红色系文字，即视为终止状态。</p>
+     */
     private static boolean hasTerminalRedColor(Component component) {
-        TextColor lastColor = null;
-        for (Component part : component.toFlatList()) {
-            if (!part.getString().isBlank() && part.getStyle().getColor() != null) {
-                lastColor = part.getStyle().getColor();
-            }
-        }
-        if (lastColor == null) return false;
+        int colon = component.getString().indexOf(':');
+        if (colon < 0) return false;
 
-        int value = lastColor.getValue();
-        return value == ChatFormatting.RED.getColor()
-                || value == ChatFormatting.DARK_RED.getColor();
+        int characterOffset = 0;
+        for (Component part : component.toFlatList()) {
+            String partText = part.getString();
+            int partEnd = characterOffset + partText.length();
+            if (partEnd > colon + 1 && !partText.isBlank()
+                    && isTerminalRed(part.getStyle().getColor())) {
+                return true;
+            }
+            characterOffset = partEnd;
+        }
+        return false;
+    }
+
+    private static boolean isTerminalRed(TextColor color) {
+        if (color == null) return false;
+
+        int value = color.getValue();
+        int red = (value >> 16) & 255;
+        int green = (value >> 8) & 255;
+        int blue = value & 255;
+
+        // Hypixel 会随资源包/计分板样式使用不同的红色值，不能只匹配原版
+        // ChatFormatting.RED 与 DARK_RED 两个固定值。
+        return red >= 128 && red >= green * 1.35F && red >= blue * 1.35F;
     }
 
 

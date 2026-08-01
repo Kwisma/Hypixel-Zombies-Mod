@@ -19,6 +19,7 @@ public class ModuleManager {
         add(new BadHeadshot());
 //        add(new BlockTransparency());
         add(new WaveDisplay());
+//        add(new Cs2RoundHud());
         add(new LightningRodQueue());
         add(new PowerupPredictor());
         add(new StatsQuery());

@@ -41,9 +41,7 @@ public class TeammateTracker implements IMinecraft {
                 current.add(name);
                 TeammateInfo info = TEAMMATES.computeIfAbsent(name, TeammateInfo::new);
                 info.setGold(sp.gold());
-                info.setPlayerState(sp.state());
-                info.setStatusText(sp.statusText());
-                info.setDown(sp.state() == TeammateInfo.PlayerState.DOWN);
+                info.applyScoreboardState(sp.state(), sp.statusText());
                 if (info.isTerminalState()) {
                     info.setBeingRevived(false);
                     info.setReviveSeconds(0);
@@ -226,6 +224,11 @@ public class TeammateTracker implements IMinecraft {
             if (tabUuids.contains(p.getUUID())) {
                 TeammateInfo info = TEAMMATES.get(cleanName(p.getGameProfile().name()));
                 if (info != null) {
+                    // 有 TAB UUID 的真实玩家实体 = 此账号已重新进入；即使计分板仍残留
+                    // 上一帧的红色 QUIT/DEAD，也必须立即解除终止状态。
+                    if (info.isTerminalState()) {
+                        info.clearTerminalAfterReconnect();
+                    }
                     info.setRenderEntity(p);
                 }
             }

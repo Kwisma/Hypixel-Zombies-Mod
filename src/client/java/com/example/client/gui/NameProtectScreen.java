@@ -11,7 +11,7 @@ import net.minecraft.network.chat.Component;
 import java.util.List;
 
 /**
- * 名字保护 GUI：输入框添加要保护的名字，列表展示已保护的名字（及其别名 PlayerN）+ 删除按钮。
+ * 名字保护 GUI：输入框添加要保护的名字，列表展示已保护的名字、别名、设置和删除按钮。
  * 名字存在 {@link ZombiesConfig#protectedNames}。
  */
 public class NameProtectScreen extends Screen {
@@ -48,7 +48,7 @@ public class NameProtectScreen extends Screen {
                 .bounds(cx + 80, 58, 60, 20).build());
 
         // 滚动列表
-        panelW = 300;
+        panelW = 360;
         panelX = cx - panelW / 2;
         panelY = LIST_TOP;
         panelH = this.height - LIST_TOP - BOTTOM_SPACE;
@@ -77,11 +77,12 @@ public class NameProtectScreen extends Screen {
 
     private void removeName(String n) {
         names().removeIf(s -> s.equalsIgnoreCase(n));
+        ZombiesConfig.removeNameProtectSettings(n);
         ZombiesConfig.save();
         buildList();
     }
 
-    /** 重建列表内容（每行右侧一个删除按钮；名字/别名文字在 render 里画）。 */
+    /** 重建列表内容（每行右侧有设置/删除按钮；名字/别名文字在 render 里画）。 */
     private void buildList() {
         int off = this.scrollPanel.getScrollOffset();
         this.scrollPanel.clearContent();
@@ -89,8 +90,13 @@ public class NameProtectScreen extends Screen {
         List<String> list = names();
         for (int i = 0; i < list.size(); i++) {
             String n = list.get(i);
+            final int index = i;
+            Button settings = Button.builder(Component.literal("Settings"),
+                            b -> Minecraft.getInstance().setScreen(new NameProtectEntryScreen(this, n, index)))
+                    .bounds(0, 0, 64, 20).build();
             Button del = Button.builder(Component.literal("X"), b -> removeName(n))
                     .bounds(0, 0, 20, 20).build();
+            this.scrollPanel.addScrollWidget(settings, panelW - 64 - 20 - 18, i * ROW_HEIGHT + 2);
             this.scrollPanel.addScrollWidget(del, panelW - 20 - 14, i * ROW_HEIGHT + 2);
         }
         this.scrollPanel.setContentHeight(list.size() * ROW_HEIGHT + 6);
@@ -114,8 +120,8 @@ public class NameProtectScreen extends Screen {
             if (rowY + ROW_HEIGHT <= panelY || rowY >= panelY + panelH) continue;
 
             graphics.text(this.font, list.get(i), panelX + 8, rowY + 6, 0xFFFFFFFF, true);
-            String alias = "→ Player" + (i + 1);
-            graphics.text(this.font, alias, panelX + 150, rowY + 6, 0xFF66CCFF, true);
+            String alias = "→ " + com.example.client.module.modules.NameProtect.aliasFor(list.get(i), i);
+            graphics.text(this.font, alias, panelX + 160, rowY + 6, 0xFF66CCFF, true);
         }
         graphics.disableScissor();
     }

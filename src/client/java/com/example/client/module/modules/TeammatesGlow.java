@@ -116,6 +116,17 @@ public class TeammatesGlow extends AbstractModule {
             int fastReviveReserve = mc.font.width("⚡5.0s") + 4;
             int boxWidth = maxNameWidth + 32 + hpReserve + fastReviveReserve;
             GuiGraphicsUtils.drawBackground(graphics, x, y, boxWidth, height);
+            if (fastReviveActive) {
+                // FR 冷却以黄色半透明底色覆盖整行；宽度随剩余冷却时间缩短。
+                int progressWidth = Math.round(boxWidth * ti.getFastReviveProgress());
+                if (progressWidth > 0) {
+                    graphics.fill(x, y, x + progressWidth, y + height,
+                            new Color(255, 215, 0, 58).getRGB());
+                    // 底部再给一条更明亮的边，进度结束位置更容易一眼看出来。
+                    graphics.fill(x, y + height - 2, x + progressWidth, y + height,
+                            new Color(255, 225, 70, 185).getRGB());
+                }
+            }
 
             if (player != null) {
                 GuiGraphicsUtils.drawPlayerHead(graphics, player, x + 4, y + 4, 20);

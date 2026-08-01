@@ -23,8 +23,10 @@ public class Hud extends AbstractModule {
     @EventTarget
     public void onRender(RenderEvent event) {
         if (mc.player == null || mc.level == null || !mc.hasSingleplayerServer()) return;
+
 //
-//        GuiGraphicsExtractor graphics = event.getGuiGraphicsExtractor();
+        GuiGraphicsExtractor graphics = event.getGuiGraphicsExtractor();
+//        mc.font.drawInBatch("ZHF: ");
 //        Component text = Component.literal("+12")
 //                .withStyle(style -> style.withFont(TEST_FONT));
 //
