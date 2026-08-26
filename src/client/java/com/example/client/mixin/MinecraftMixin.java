@@ -3,7 +3,6 @@ package com.example.client.mixin;
 import com.example.client.ZombiesModClient;
 import com.example.client.module.AbstractModule;
 import com.example.client.module.modules.TeammatesGlow;
-import com.example.client.module.modules.ZombieChams;
 import com.example.client.utils.PlayerUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;

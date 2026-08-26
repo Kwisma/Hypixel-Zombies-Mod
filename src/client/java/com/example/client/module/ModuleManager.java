@@ -3,6 +3,7 @@ package com.example.client.module;
 import com.darkmagician6.eventapi.EventManager;
 
 import com.example.client.module.modules.*;
+import com.example.client.chams.ZombieChams;
 import lombok.Getter;
 
 import java.util.ArrayList;
