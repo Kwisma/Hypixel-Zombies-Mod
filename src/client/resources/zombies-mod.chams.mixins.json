@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "package": "com.example.client.chams.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "LivingEntityRenderStateChamsMixin",
+    "LivingEntityRendererChamsMixin",
+    "RenderTypesChamsMixin",
+    "CustomHeadLayerChamsMixin",
+    "ItemFeatureRendererChamsMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
