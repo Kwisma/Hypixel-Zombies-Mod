@@ -128,7 +128,7 @@ public class GuiGraphicsUtils {
         graphics.fill(x, y, x + 1, y + height, 0xFF000000);
         graphics.fill(x + width - 1, y, x + width, y + height, 0xFF000000);
     }
-    private static int getHealthColor(float percent) {
+    public static int getHealthColor(float percent) {
         if (percent > 0.66F)
             return 0xFF55FF55; //绿
         if (percent > 0.33F)

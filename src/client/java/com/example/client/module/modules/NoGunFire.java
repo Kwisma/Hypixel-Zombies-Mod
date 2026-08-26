@@ -57,7 +57,7 @@ public class NoGunFire extends AbstractModule {
                 packet.getZ()
         );
 
-        return distanceSq <= 26.0;
+        return true;
     }
 
     private static boolean isGunFireParticle(ParticleOptions options) {
@@ -66,15 +66,16 @@ public class NoGunFire extends AbstractModule {
         }
 
         ParticleType<?> type = options.getType();
-
-        return type == ParticleTypes.FLAME
-                || type == ParticleTypes.SMALL_FLAME
-                || type == ParticleTypes.LAVA
-                || type == ParticleTypes.SMOKE
-                || type == ParticleTypes.LARGE_SMOKE
-                || type == ParticleTypes.CAMPFIRE_COSY_SMOKE
-                || type == ParticleTypes.CAMPFIRE_SIGNAL_SMOKE
-                || type == ParticleTypes.FIREWORK
-                || type == ParticleTypes.POOF;
+        return true;
+//
+//        return type == ParticleTypes.FLAME
+//                || type == ParticleTypes.SMALL_FLAME
+//                || type == ParticleTypes.LAVA
+//                || type == ParticleTypes.SMOKE
+//                || type == ParticleTypes.LARGE_SMOKE
+//                || type == ParticleTypes.CAMPFIRE_COSY_SMOKE
+//                || type == ParticleTypes.CAMPFIRE_SIGNAL_SMOKE
+//                || type == ParticleTypes.FIREWORK
+//                || type == ParticleTypes.POOF;
     }
 }

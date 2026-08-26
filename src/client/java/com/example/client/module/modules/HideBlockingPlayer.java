@@ -27,10 +27,15 @@ public class HideBlockingPlayer extends AbstractModule {
     })
     public static final BooleanSetting fullHide = new BooleanSetting(false);
 
+    @SettingInfo(name = {
+            @Text(label = "Hide When Raycast", language = Language.English),
+            @Text(label = "隐藏射线上的玩家", language = Language.Chinese)
+    })
+    public static final BooleanSetting hideWhenRaycast = new BooleanSetting(false);
 
 
     public HideBlockingPlayer() {
-        registerSetting(fadeOverlapExpand, fullHide);
+        registerSetting(fadeOverlapExpand, fullHide, hideWhenRaycast);
 
     }
 }

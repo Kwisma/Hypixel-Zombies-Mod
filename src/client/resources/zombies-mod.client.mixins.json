@@ -14,11 +14,17 @@
     "requireAnnotations": true
   },
   "mixins": [
+    "skia.GameRendererAccessor",
+    "skia.GameRendererMixin",
+    "skia.GuiRendererMixin",
+    "skia.GuiRendererTargetMixin",
+
     "render.EntityRendererMixin",
     "EquipmentLayerRendererMixin",
     "HumanoidArmorLayerMixin",
     "CustomHeadLayerMixin",
     "KeyboardHandlerMixin",
+    "MouseHandlerMixin",
     "MouseHandlerInvoker",
     "render.LivingEntityRendererMixin",
     "render.LivingEntityRendererChamsMixin",

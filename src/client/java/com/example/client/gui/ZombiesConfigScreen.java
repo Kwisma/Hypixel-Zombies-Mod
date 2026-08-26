@@ -10,7 +10,7 @@ import com.example.client.setting.settings.ButtonSetting;
 import com.example.client.setting.settings.ModeSetting;
 import com.example.client.setting.settings.NumberSetting;
 import com.example.client.utils.render.DoubleSliderButton;
-import com.mojang.blaze3d.platform.InputConstants;
+import com.example.client.utils.InputBindingUtils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -100,6 +100,23 @@ public class ZombiesConfigScreen extends Screen {
 
     @Override
     public boolean mouseClicked(@NotNull net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+        if (InputBindingUtils.isBindableMouseButton(event.button())) {
+            int binding = InputBindingUtils.encodeMouseButton(event.button());
+            if (this.listeningForKey) {
+                ZombiesModClient.guiKey = binding;
+                this.listeningForKey = false;
+                ZombiesConfig.save();
+                rebuild();
+                return true;
+            }
+            if (this.listeningModule != null) {
+                this.listeningModule.setKey(binding);
+                this.listeningModule = null;
+                ZombiesConfig.save();
+                buildSettings();
+                return true;
+            }
+        }
         int tab = NavTabs.hit(this.width, event.x(), event.y());
         if (tab >= 0 && tab != 0) { NavTabs.open(tab, this.parent); return true; }
         return super.mouseClicked(event, doubleClick);
@@ -254,14 +271,14 @@ public class ZombiesConfigScreen extends Screen {
     }
 
     private static Component bindText() {
-        String keyName = InputConstants.Type.KEYSYM.getOrCreate(ZombiesModClient.guiKey).getDisplayName().getString();
+        String keyName = InputBindingUtils.displayName(ZombiesModClient.guiKey);
         return Component.literal("Gui Bind: ").append(Component.literal(keyName).withStyle(ChatFormatting.AQUA));
     }
 
     private static Component moduleKeyText(AbstractModule module) {
         int key = module.getKey();
-        if (key <= 0) return Component.literal("None").withStyle(ChatFormatting.GRAY);
-        String keyName = InputConstants.Type.KEYSYM.getOrCreate(key).getDisplayName().getString();
+        if (key == InputBindingUtils.NONE) return Component.literal("None").withStyle(ChatFormatting.GRAY);
+        String keyName = InputBindingUtils.displayName(key);
         return Component.literal(keyName).withStyle(ChatFormatting.AQUA);
     }
 

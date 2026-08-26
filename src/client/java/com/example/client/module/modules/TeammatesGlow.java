@@ -2,6 +2,7 @@ package com.example.client.module.modules;
 
 import com.darkmagician6.eventapi.EventTarget;
 import com.example.client.events.RenderEvent;
+import com.example.client.events.SkiaEvent;
 import com.example.client.language.Language;
 import com.example.client.language.Text;
 import com.example.client.module.AbstractModule;
@@ -9,8 +10,12 @@ import com.example.client.module.annotation.ModuleInfo;
 import com.example.client.setting.annotation.SettingInfo;
 import com.example.client.setting.settings.BooleanSetting;
 import com.example.client.setting.settings.NumberSetting;
+import com.example.client.skia.CanvasStack;
+import com.example.client.skia.fbo.GameFramebuffer;
+import com.example.client.skia.font.SkiaFont;
+import com.example.client.skia.font.SkiaFonts;
+import com.example.client.skia.render.RenderUtils;
 import com.example.client.tracker.TeammateInfo;
-import com.example.client.tracker.TeammateTracker;
 import com.example.client.utils.PlayerUtils;
 import com.example.client.utils.render.GuiGraphicsUtils;
 import net.minecraft.ChatFormatting;
@@ -18,11 +23,10 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 
 import java.awt.*;
 import java.util.*;
-import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @see com.example.client.mixin.MinecraftMixin
@@ -33,6 +37,12 @@ import java.util.List;
         @Text(label = "队友高亮显示", language = Language.Chinese)
 }, enable = true)
 public class TeammatesGlow extends AbstractModule {
+    /**
+     * Skia HUD 视觉调试；完成布局后改为 false。
+     */
+    private static final boolean SKIA_DEBUG_TEAMMATES = false;
+    private static final TeammateInfo[] SKIA_DEBUG_DATA = createSkiaDebugData();
+
     @SettingInfo(name = {
             @Text(label = "Only In Zombies", language = Language.English),
             @Text(label = "仅在僵尸末日里", language = Language.Chinese)
@@ -54,7 +64,9 @@ public class TeammatesGlow extends AbstractModule {
     })
     public static final NumberSetting posY = new NumberSetting(0.1, 0, 1, "#.00");
 
-    /** 每个队友的血条动画状态（按名字）。 */
+    /**
+     * 每个队友的血条动画状态（按名字）。
+     */
     private static final Map<String, HpAnim> HP_ANIMS = new HashMap<>();
 
     private static final class HpAnim {
@@ -62,15 +74,223 @@ public class TeammatesGlow extends AbstractModule {
         long lastMs;
         boolean init;
     }
+    private final AtomicInteger totalHeight = new AtomicInteger();
+    private final AtomicInteger maxWidth = new AtomicInteger();
+    @EventTarget
+    public void onRenderSkia(SkiaEvent event) {
+        if (mc.player == null || mc.level == null) return;
+        if (!SKIA_DEBUG_TEAMMATES && onlyGame.getValue() && !PlayerUtils.isInHypZombies()) return;
+        if (!info.getValue()) return;
+
+//        TeammateInfo[] trackedTeammates = TeammateInfo.teammates;
+//        installSkiaDebugData();
+        try {
+            SkiaFont skiaFont = SkiaFonts.getDefaultFont(8);
+
+            int maxNameWidth = 0;
+            Set<String> currentNames = new HashSet<>();
+            for (TeammateInfo ti : TeammateInfo.teammates) {
+                currentNames.add(ti.getName());
+                String line = ti.getName() + " " + formatGold(ti.getGold()) + " (Blocking)";
+                int nameWidth = Math.round(skiaFont.getWidth(line));
+
+                if (nameWidth > maxNameWidth) {
+                    maxNameWidth = nameWidth;
+                }
+            }
+
+            int screenWidth = mc.getWindow().getGuiScaledWidth();
+            int screenHeight = mc.getWindow().getGuiScaledHeight();
+
+            double xPercent = posX.getValue().doubleValue();
+            double yPercent = posY.getValue().doubleValue();
+
+            int x = (int) (screenWidth * xPercent);
+            int y = (int) (screenHeight * yPercent);
+            GameFramebuffer gameFramebuffer = event.getCustomLayer();
+            int height = 28;
+
+            CanvasStack canvasStack = event.getCanvasStack();
+            TeammateInfo[] framebufferTeammates = TeammateInfo.teammates.clone();
+
+
+            int finalMaxNameWidth = maxNameWidth;
+            gameFramebuffer.setRenderer((graphics, deltaTracker) -> {
+                int tWidth = 0;
+                int tempHeight = 0;
+
+                int tempY = (int) (screenHeight * yPercent);
+                for (TeammateInfo ti : framebufferTeammates) {
+
+                    Player player = ti.getRenderEntity();
+                    int hpReserve = Math.round(skiaFont.getWidth("9999/9999"));
+                    int fastReviveReserve = Math.round(skiaFont.getWidth("⚡5.0s")) + 4;
+                    int boxWidth = finalMaxNameWidth + hpReserve + fastReviveReserve + 15;
+                    if (boxWidth > tWidth) {
+                        tWidth = boxWidth;
+                    }
+                    if (player != null) {
+//                         System.out.println(player.getName());
+                        GuiGraphicsUtils.drawPlayerHead(graphics, player, x + 3, tempY + 3, 22);
+                    }
+                    tempHeight += height;
+                    tempY += height;
+                }
+                maxWidth.set(tWidth);
+                totalHeight.set(tempHeight);
+            });
+
+//            System.out.println(totalHeight.get());
+            //bg
+            RenderUtils.drawShadow(canvasStack, x,y , maxWidth.get(), totalHeight.get(),5, Color.BLACK.getRGB());
+            RenderUtils.drawBlur(canvasStack, x, y, maxWidth.get(), totalHeight.get(), 5, 15);
+            RenderUtils.drawRect(canvasStack, x, y, maxWidth.get(), totalHeight.get(), 5, 0xB81A1E24);
+
+            gameFramebuffer.render(canvasStack);
+            for (TeammateInfo ti : TeammateInfo.teammates) {
+                Player player = ti.getRenderEntity();
+
+                boolean blocking = PlayerUtils.isPlayerBlockingHyp(player);
+                boolean down = ti.isDown();
+                boolean terminal = ti.isTerminalState();
+                boolean fastReviveActive = !terminal && ti.isFastReviveActive();
+                String fastReviveText = fastReviveActive
+                        ? "⚡" + String.format(Locale.ROOT, "%.1f", ti.getFastReviveSecondsLeft()) + "s"
+                        : "";
+
+                String name = ti.getName()
+                        + ChatFormatting.GOLD + " " + formatGold(ti.getGold())
+                        + ChatFormatting.YELLOW + (blocking? " (Blocking)" : "");
+
+                int hpReserve = Math.round(skiaFont.getWidth("9999/9999"));
+                int fastReviveReserve = Math.round(skiaFont.getWidth("⚡5.0s")) + 15;
+                int boxWidth = maxNameWidth + hpReserve + fastReviveReserve + 4;
+
+                if (player != null) {
+
+                    float health = Math.max(0.0F, player.getHealth());
+                    float maxHealth = Math.max(1.0F, player.getMaxHealth());
+                    float percent = Math.clamp(health / maxHealth, 0.0F, 1.0F);
+
+                    skiaFont.drawShadowString(canvasStack, name, x + 28, y + 3, Color.WHITE.getRGB(), true);
+                    String hp = (int) Math.ceil(health) + "/" + (int) Math.ceil(maxHealth);
+                    int hpColor = percent > 0.5f ? 0xFF66FF66 : (percent > 0.25f ? 0xFFFFD633 : 0xFFFF5555);
+                    skiaFont.drawShadowString(canvasStack, hp, x + boxWidth - skiaFont.getWidth(hp) - 6, y + 3, hpColor, true);
+
+                    //health bar
+                    RenderUtils.drawRect(canvasStack, x + 28, y + 16, boxWidth - 28 - 6, 3, 4, new Color(24, 24, 24, 180).getRGB());
+                    RenderUtils.drawRect(canvasStack, x + 28, y + 16, (boxWidth - 28 - 6) * percent, 3, 4, GuiGraphicsUtils.getHealthColor(percent));
+
+                    //armor bar
+                    int armor = player.getArmorValue();
+                    float armorPercent = Math.clamp(armor / 20.0F, 0.0F, 1.0F);
+                    RenderUtils.drawRect(canvasStack, x + 28, y + 22, boxWidth - 28 - 6, 3, 4, new Color(24, 24, 24, 130).getRGB());
+                    RenderUtils.drawRect(canvasStack, x + 28, y + 22, (boxWidth - 28 - 6) * armorPercent, 3, 4, GuiGraphicsUtils.getArmorColor(armorPercent));
+
+
+                }
+                if (terminal) {
+                    String terminalText = ti.getStatusText().isBlank()
+                            ? "DEAD"
+                            : ti.getStatusText().toUpperCase(Locale.ROOT);
+                    Color terminalColor = new Color(255, 85, 85);
+                    float statusWidth = skiaFont.getWidth(terminalText);
+                    RenderUtils.drawRect(canvasStack, x, y, boxWidth, height, 0, 0xAA111111);
+//                   graphics.fill(x, y, x + boxWidth, y + height, 0xAA111111);
+                    skiaFont.drawShadowString(canvasStack, terminalText, (x + boxWidth / 2F - statusWidth / 2F), y + 7, terminalColor.getRGB(), true);
+
+                } else if (down) {
+                    boolean reviving = ti.isBeingRevived();
+                    String str = reviving
+                            ? "REVIVING " + String.format("%.1f", ti.getReviveSeconds()) + "s"
+                            : "REVIVE";
+
+                    float strW = skiaFont.getWidth(str);
+//                   graphics.fill(x, y, x + boxWidth, y + height, 0xAA111111);
+                    RenderUtils.drawRect(canvasStack, x, y, boxWidth, height, 0, 0xAA111111);
+                    skiaFont.drawShadowString(canvasStack, str, (x + boxWidth / 2f - (strW / 2f)), y + 7, reviving ? Color.cyan.getRGB() : Color.GREEN.getRGB(), true);
+                }
+
+                if (fastReviveActive) {
+                    int hpReferenceWidth = (int) skiaFont.getWidth("20/20");
+                    int timerRight = x + boxWidth - 12 - hpReferenceWidth - 4;
+                    int timerX = (int) (timerRight - skiaFont.getWidth(fastReviveText));
+                    skiaFont.drawShadowString(canvasStack, fastReviveText, timerX, y + 3,
+                            new Color(255, 255, 85).getRGB(), true);
+                }
+//                skiaFont.drawString(canvasStack, player);
+//                System.out.println("11111");
+
+                y += height;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+        } finally {
+            // 调试数据只服务 Skia 路径，不覆盖 TeammateTracker 的正式公开快照。
+//            TeammateInfo.teammates = trackedTeammates;
+        }
+
+    }
+
+    private static TeammateInfo[] createSkiaDebugData() {
+        TeammateInfo alive = new TeammateInfo("DebugAlive");
+        alive.setGold(12_345L);
+
+        TeammateInfo down = new TeammateInfo("DebugDown");
+        down.setGold(800L);
+        down.applyScoreboardState(TeammateInfo.PlayerState.DOWN, "REVIVE");
+
+        TeammateInfo reviving = new TeammateInfo("DebugReviving");
+        reviving.setGold(6_666L);
+        reviving.applyScoreboardState(TeammateInfo.PlayerState.DOWN, "REVIVING");
+        reviving.setBeingRevived(true);
+        reviving.setReviveSeconds(3.5D);
+
+        TeammateInfo terminal = new TeammateInfo("DebugDead");
+        terminal.setGold(0L);
+        terminal.applyScoreboardState(TeammateInfo.PlayerState.TERMINAL, "DEAD");
+
+        TeammateInfo fastRevive = new TeammateInfo("DebugFastRevive");
+        fastRevive.setGold(99_999L);
+        fastRevive.startFastRevive(5_000L);
+
+        return new TeammateInfo[]{alive, down, reviving, terminal, fastRevive};
+    }
+
+    /**
+     * 把所有典型状态注入公开快照，供正在开发的 Skia 面板直接遍历。
+     */
+    private static void installSkiaDebugData() {
+        long now = System.currentTimeMillis();
+
+        // 复用本地玩家实体，使头像、血量、护甲和 hurt overlay 都有实际数据可画。
+        for (TeammateInfo info : SKIA_DEBUG_DATA) {
+            info.setRenderEntity(mc.player);
+        }
+
+        // 救援倒计时循环变化，方便观察数字宽度和刷新效果。
+        double reviveSeconds = Math.max(0.1D, (4_000L - now % 4_000L) / 1_000.0D);
+        SKIA_DEBUG_DATA[2].setReviveSeconds(reviveSeconds);
+
+        // 快速复活进度走完后重新开始，持续测试整行进度动画。
+        if (!SKIA_DEBUG_DATA[4].isFastReviveActive()) {
+            SKIA_DEBUG_DATA[4].startFastRevive(5_000L);
+        }
+
+        TeammateInfo.teammates = SKIA_DEBUG_DATA;
+    }
 
     public TeammatesGlow() {
         registerSetting(onlyGame, info, posX, posY);
     }
-    @EventTarget
+
+//    @EventTarget
     public void onRender(RenderEvent event) {
-        if(mc.player == null || mc.level == null) return;
-        if(onlyGame.getValue() && !PlayerUtils.isInHypZombies()) return;
-        if(!info.getValue()) return;
+        if (mc.player == null || mc.level == null) return;
+        if (onlyGame.getValue() && !PlayerUtils.isInHypZombies()) return;
+        if (!info.getValue()) return;
 
         GuiGraphicsExtractor graphics = event.getGuiGraphicsExtractor();
         int maxNameWidth = 0;
@@ -131,18 +351,18 @@ public class TeammatesGlow extends AbstractModule {
             if (player != null) {
                 GuiGraphicsUtils.drawPlayerHead(graphics, player, x + 4, y + 4, 20);
                 if (player.hurtTime != 0) {
-                    graphics.fill(x + 4, y + 4, x + 4 + 20, y + 4 + 20, new Color(255,0,0,150).getRGB());
+                    graphics.fill(x + 4, y + 4, x + 4 + 20, y + 4 + 20, new Color(255, 0, 0, 150).getRGB());
 
                 }
                 if (!down && player.isShiftKeyDown()) {
                     int bx = x + 4 + 20 - 9;   // 头像右下角
                     int by = y + 4 + 20 - 9;
                     graphics.fill(bx - 1, by - 1, bx + 10, by + 10, 0xFF0A0A0A); // 深色描边
-                    graphics.fill(bx,     by,     bx + 9,  by + 9,  0xFF1D9E75); // 青色底
-                    graphics.fill(bx + 1, by + 2, bx + 8,  by + 3,  0xFFFFFFFF); // ▼ 顶
-                    graphics.fill(bx + 2, by + 3, bx + 7,  by + 4,  0xFFFFFFFF);
-                    graphics.fill(bx + 3, by + 4, bx + 6,  by + 5,  0xFFFFFFFF);
-                    graphics.fill(bx + 4, by + 5, bx + 5,  by + 6,  0xFFFFFFFF); // 尖
+                    graphics.fill(bx, by, bx + 9, by + 9, 0xFF1D9E75); // 青色底
+                    graphics.fill(bx + 1, by + 2, bx + 8, by + 3, 0xFFFFFFFF); // ▼ 顶
+                    graphics.fill(bx + 2, by + 3, bx + 7, by + 4, 0xFFFFFFFF);
+                    graphics.fill(bx + 3, by + 4, bx + 6, by + 5, 0xFFFFFFFF);
+                    graphics.fill(bx + 4, by + 5, bx + 5, by + 6, 0xFFFFFFFF); // 尖
                 }
             }
 
@@ -152,7 +372,7 @@ public class TeammatesGlow extends AbstractModule {
 
                 float health = Math.max(0.0F, player.getHealth());
                 float maxHealth = Math.max(1.0F, player.getMaxHealth());
-                float percent = Math.max(0.0F, Math.min(1.0F, health / maxHealth));
+                float percent = Math.clamp(health / maxHealth, 0.0F, 1.0F);
 
                 // 当前/最大生命值，右对齐在名字行；按血量比例上色
                 String hp = (int) Math.ceil(health) + "/" + (int) Math.ceil(maxHealth);
@@ -166,7 +386,7 @@ public class TeammatesGlow extends AbstractModule {
                 drawHpTrail(graphics, x + 27, y + 14 + 1, boxWidth - 30, 2, percent, anim);
 
                 int armor = player.getArmorValue();
-                float armorPercent = Math.max(0.0F, Math.min(1.0F, armor / 20.0F));
+                float armorPercent = Math.clamp(armor / 20.0F, 0.0F, 1.0F);
                 GuiGraphicsUtils.drawArmorBar(graphics, x + 27, y + 14 + 6, boxWidth - 30, 4, armorPercent);
             }
 
@@ -180,7 +400,7 @@ public class TeammatesGlow extends AbstractModule {
                 graphics.text(mc.font, terminalText,
                         (int) (x + boxWidth / 2F - statusWidth / 2F), y + 10,
                         terminalColor.getRGB(), true);
-            } else if(down) {
+            } else if (down) {
                 boolean reviving = ti.isBeingRevived();
                 String str = reviving
                         ? "REVIVING " + String.format("%.1f", ti.getReviveSeconds()) + "s"
@@ -219,7 +439,10 @@ public class TeammatesGlow extends AbstractModule {
         long now = System.currentTimeMillis();
         float dt = a.init ? Math.min(0.1f, (now - a.lastMs) / 1000f) : 0f; // 限制 dt，防卡顿大跳
         a.lastMs = now;
-        if (!a.init) { a.ghost = target; a.init = true; }
+        if (!a.init) {
+            a.ghost = target;
+            a.init = true;
+        }
 
         if (target < a.ghost) {
             a.ghost -= dt * 0.9f;                 // 掉血：拖尾每秒回落 0.9

@@ -13,6 +13,7 @@ import net.minecraft.world.entity.monster.skeleton.Skeleton;
 import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 public class HidePlayerHelper implements IMinecraft {
     public static boolean shouldFade(Player target) {
@@ -33,10 +34,27 @@ public class HidePlayerHelper implements IMinecraft {
         if (target.isInvisible()) {
             return false;
         }
-
+        if(HideBlockingPlayer.hideWhenRaycast.getValue() &&
+                intersectsCrosshair(target, 64D)) {
+            return true;
+        }
         return overlapsSelf(target, HideBlockingPlayer.fadeOverlapExpand.getValue().doubleValue());
     }
+    private static boolean intersectsCrosshair(Player target, double distance) {
+        if (mc.player == null || !mc.player.hasLineOfSight(target)) {
+            return false;
+        }
 
+        Vec3 start = mc.player.getEyePosition();
+        Vec3 end = start.add(
+                mc.player.getViewVector(1.0F).scale(distance)
+        );
+
+        return target.getBoundingBox()
+                .inflate(0.3D)
+                .clip(start, end)
+                .isPresent();
+    }
     public static boolean shouldFade(Zombie target) {
         return shouldFadeZombieLike(target);
     }

@@ -5,7 +5,7 @@ import com.example.client.data.ZombiesGuns;
 import com.example.client.config.ZombiesConfig;
 import com.example.client.config.AutoSwitchWeaponConfig.GunSwitchSetting;
 import com.example.client.utils.render.DoubleSliderButton;
-import com.mojang.blaze3d.platform.InputConstants;
+import com.example.client.utils.InputBindingUtils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -236,15 +236,22 @@ public class AutoSwitchWeaponScreen extends Screen {
     /** 绑定按钮文字：显示该枪的开关键名，未绑定显示 -。 */
     private static Component keyLabel(GunSwitchSetting config) {
         int key = config.getKey();
-        if (key <= 0) {
+        if (key == InputBindingUtils.NONE) {
             return Component.literal("-").withStyle(ChatFormatting.GRAY);
         }
-        String name = InputConstants.Type.KEYSYM.getOrCreate(key).getDisplayName().getString();
+        String name = InputBindingUtils.displayName(key);
         return Component.literal(name).withStyle(ChatFormatting.AQUA);
     }
 
     @Override
     public boolean mouseClicked(@NotNull net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+        if (listeningGun != null && InputBindingUtils.isBindableMouseButton(event.button())) {
+            AutoSwitchWeaponConfig.get(listeningGun).setKey(InputBindingUtils.encodeMouseButton(event.button()));
+            listeningGun = null;
+            ZombiesConfig.save();
+            rebuild();
+            return true;
+        }
         int tab = NavTabs.hit(this.width, event.x(), event.y());
         if (tab >= 0 && tab != 1) { NavTabs.open(tab, this.parent); return true; }
         return super.mouseClicked(event, doubleClick);

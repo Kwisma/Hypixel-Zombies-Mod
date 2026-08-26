@@ -21,11 +21,13 @@ public class ModuleManager {
         add(new WaveDisplay());
 //        add(new Cs2RoundHud());
         add(new LightningRodQueue());
+        add(new FrameTime());
         add(new PowerupPredictor());
         add(new StatsQuery());
         add(new NameProtect());
         add(new DamageNumbers());
         add(new HologramFix());
+        add(new SkillShare());
         add(new LiquidGlassTest());
         add(new Hud());
 //        new com.example.client.tracker.AmmoTracker(); // 弹药跟踪样本（自注册到 EventManager）

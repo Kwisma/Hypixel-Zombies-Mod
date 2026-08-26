@@ -12,7 +12,7 @@ import com.example.client.events.SoundPacketEvent;
 import com.example.client.events.TickEvent;
 import com.example.client.module.AbstractModule;
 import com.example.client.module.modules.DPSCounter;
-import com.example.client.module.modules.Cs2RoundHud;
+
 import com.example.client.module.modules.Notification;
 import com.example.client.module.modules.TargetHud;
 import com.example.client.utils.*;
@@ -138,7 +138,7 @@ public class ServerTracker implements IMinecraft {
                 lastRoundStartGold = myGold;
             }
 
-            Cs2RoundHud.showRoundWin(lastRound, roundGoldDelta);
+           // Cs2RoundHud.showRoundWin(lastRound, roundGoldDelta);
 
             long time = System.currentTimeMillis() - roundTime;
             String timeStr = formatSeconds((int) (time / 1000L));

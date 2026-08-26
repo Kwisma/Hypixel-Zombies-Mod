@@ -27,6 +27,12 @@ loom {
 }
 
 dependencies {
+
+	def skijaVersion = "0.116.4"
+	implementation include("io.github.humbleui:skija-shared:${skijaVersion}")
+	implementation include("io.github.humbleui:skija-windows-x64:${skijaVersion}")
+	// Loom's include is not transitive. Skija's JNI bootstrap requires this at runtime.
+	implementation include("io.github.humbleui:types:0.1.1")
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	

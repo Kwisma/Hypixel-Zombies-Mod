@@ -3,7 +3,7 @@ package com.example.client.module.modules;
 import com.darkmagician6.eventapi.EventTarget;
 import com.example.client.events.EntityLoadEvent;
 import com.example.client.events.PacketEvent;
-import com.example.client.events.RenderEvent;
+import com.example.client.events.SkiaEvent;
 import com.example.client.events.TickEvent;
 import com.example.client.language.Language;
 import com.example.client.language.Text;
@@ -11,15 +11,16 @@ import com.example.client.module.AbstractModule;
 import com.example.client.module.annotation.ModuleInfo;
 import com.example.client.setting.annotation.SettingInfo;
 import com.example.client.setting.settings.NumberSetting;
+import com.example.client.skia.CanvasStack;
+import com.example.client.skia.font.SkiaFont;
+import com.example.client.skia.font.SkiaFonts;
+import com.example.client.skia.render.RenderUtils;
 import com.example.client.utils.PlayerUtils;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundLoginPacket;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.Arrays;
 
 @ModuleInfo(name = {
@@ -31,20 +32,22 @@ public class LightningRodQueue extends AbstractModule {
     private static final long COOLDOWN_MS = 20_000L;
     private static final long OUTSIDE_RESET_GRACE_MS = 3_000L;
 
-    private static final int TILE_WIDTH = 26;
-    private static final int TILE_HEIGHT = 34;
-    private static final int TILE_GAP = 3;
-    private static final int PROGRESS_HEIGHT = 2;
+    private static final float PANEL_WIDTH = 154F;
+    private static final float PANEL_HEIGHT = 45F;
+    private static final float PANEL_RADIUS = 7F;
+    private static final float PANEL_PADDING = 7F;
+    private static final float SLOT_WIDTH = 32F;
+    private static final float SLOT_HEIGHT = 23F;
+    private static final float SLOT_GAP = 4F;
 
-    private static final Color BACKGROUND = new Color(13, 17, 23, 190);
-    private static final Color READY_BORDER = new Color(70, 220, 120, 255);
-    private static final Color COOLDOWN_BORDER = new Color(65, 165, 255, 255);
-    private static final Color READY_TEXT = new Color(100, 255, 145, 255);
-    private static final Color COOLDOWN_TEXT = new Color(235, 245, 255, 255);
-    private static final Color SLOT_TEXT = new Color(175, 190, 205, 255);
-    private static final Color COOLDOWN_OVERLAY = new Color(5, 8, 13, 155);
-    private static final Color READY_PROGRESS = new Color(70, 220, 120, 255);
-    private static final Color COOLDOWN_PROGRESS = new Color(55, 180, 255, 255);
+    private static final int PANEL_COLOR = 0xB81A1E24;
+    private static final int PANEL_HIGHLIGHT = 0x70343C46;
+    private static final int SLOT_COLOR = 0xA8232931;
+    private static final int SLOT_INNER_COLOR = 0xE0181D23;
+    private static final int READY_COLOR = 0xFF64FF91;
+    private static final int COOLDOWN_COLOR = 0xFF41A5FF;
+    private static final int PRIMARY_TEXT_COLOR = 0xFFF3F7FA;
+    private static final int MUTED_TEXT_COLOR = 0xFF9CA9B5;
 
     @SettingInfo(name = {
             @Text(label = "X", language = Language.English),
@@ -60,8 +63,6 @@ public class LightningRodQueue extends AbstractModule {
 
     private final long[] cooldownEndMs = new long[SLOT_COUNT];
     private long lastZombiesSeenMs;
-    private ItemStack lightningRodIcon;
-    private ItemStack cooldownIcon;
 
     public LightningRodQueue() {
         registerSetting(posX, posY);
@@ -100,21 +101,16 @@ public class LightningRodQueue extends AbstractModule {
     }
 
     @EventTarget
-    public void onRender(RenderEvent event) {
+    public void onRenderSkia(SkiaEvent event) {
         if (mc.player == null || mc.level == null || !isTrackingEnvironment()) return;
 
         long now = System.currentTimeMillis();
-        int totalWidth = SLOT_COUNT * TILE_WIDTH + (SLOT_COUNT - 1) * TILE_GAP;
         int screenWidth = mc.getWindow().getGuiScaledWidth();
         int screenHeight = mc.getWindow().getGuiScaledHeight();
-        int startX = (int) Math.round(screenWidth * posX.getValue().doubleValue()) - totalWidth / 2;
-        int y = (int) Math.round(screenHeight * posY.getValue().doubleValue());
+        float x = Math.round(screenWidth * posX.getValue().doubleValue()) - PANEL_WIDTH * 0.5F;
+        float y = Math.round(screenHeight * posY.getValue().doubleValue());
 
-        GuiGraphicsExtractor graphics = event.getGuiGraphicsExtractor();
-        for (int slot = 0; slot < SLOT_COUNT; slot++) {
-            int x = startX + slot * (TILE_WIDTH + TILE_GAP);
-            drawSlot(graphics, x, y, slot, now);
-        }
+        drawPanel(event.getCanvasStack(), x, y, now);
     }
 
     private void recordLightningStrike() {
@@ -130,47 +126,99 @@ public class LightningRodQueue extends AbstractModule {
         }
     }
 
-    private void drawSlot(GuiGraphicsExtractor graphics, int x, int y, int slot, long now) {
-        long remainingMs = Math.max(0L, cooldownEndMs[slot] - now);
-        boolean coolingDown = remainingMs > 0L;
-        Color border = coolingDown ? COOLDOWN_BORDER : READY_BORDER;
+    private void drawPanel(CanvasStack canvasStack, float x, float y, long now) {
+        SkiaFont titleFont = SkiaFonts.getDefaultFont(8);
+        SkiaFont slotFont = SkiaFonts.getDefaultFont(6);
+        SkiaFont indexFont = SkiaFonts.getDefaultFont(6);
 
-        graphics.fill(x, y, x + TILE_WIDTH, y + TILE_HEIGHT, BACKGROUND.getRGB());
-        graphics.outline(x, y, TILE_WIDTH, TILE_HEIGHT, border.getRGB());
-        graphics.item(getSlotIcon(coolingDown), x + (TILE_WIDTH - 16) / 2, y + 2);
-
-        if (coolingDown) {
-            graphics.fill(x + 4, y + 2, x + TILE_WIDTH - 4, y + 20, COOLDOWN_OVERLAY.getRGB());
+        int readyCount = 0;
+        for (long cooldownEnd : cooldownEndMs) {
+            if (cooldownEnd <= now) readyCount++;
         }
 
-        String slotLabel = Integer.toString(slot + 1);
-        graphics.text(mc.font, slotLabel, x + 2, y + 2, SLOT_TEXT.getRGB(), true);
+        RenderUtils.drawShadow(
+                canvasStack, x, y, PANEL_WIDTH, PANEL_HEIGHT, PANEL_RADIUS,
+                Color.BLACK.getRGB()
+        );
+        RenderUtils.drawBlur(canvasStack, x, y, PANEL_WIDTH, PANEL_HEIGHT, PANEL_RADIUS, 12F);
+        RenderUtils.drawRect(canvasStack, x, y, PANEL_WIDTH, PANEL_HEIGHT, PANEL_RADIUS, PANEL_COLOR);
+
+        // 标题前的状态色强调线。
+        RenderUtils.drawRect(canvasStack, x + PANEL_PADDING, y + 5F, 2F, 7F, 1F, READY_COLOR);
+        titleFont.drawShadowString(
+                canvasStack, "LR QUEUE", x + PANEL_PADDING + 5F, y + 3.5F,
+                PRIMARY_TEXT_COLOR, true
+        );
+
+        String readyText = readyCount + "/" + SLOT_COUNT + " READY";
+        titleFont.drawShadowString(
+                canvasStack,
+                readyText,
+                x + PANEL_WIDTH - PANEL_PADDING - titleFont.getWidth(readyText),
+                y + 3.5F,
+                readyCount == 0 ? COOLDOWN_COLOR : READY_COLOR,
+                true
+        );
+
+        float slotY = y + 16F;
+        for (int slot = 0; slot < SLOT_COUNT; slot++) {
+            float slotX = x + PANEL_PADDING + slot * (SLOT_WIDTH + SLOT_GAP);
+            drawSlot(canvasStack, slotFont, indexFont, slotX, slotY, slot, now);
+        }
+    }
+
+    private void drawSlot(
+            CanvasStack canvasStack,
+            SkiaFont slotFont,
+            SkiaFont indexFont,
+            float x,
+            float y,
+            int slot,
+            long now
+    ) {
+        long remainingMs = Math.max(0L, cooldownEndMs[slot] - now);
+        boolean coolingDown = remainingMs > 0L;
+        int stateColor = coolingDown ? COOLDOWN_COLOR : READY_COLOR;
 
         String status;
-        Color statusColor;
         float progress;
         if (coolingDown) {
-            status = Long.toString((remainingMs + 999L) / 1_000L);
-            statusColor = COOLDOWN_TEXT;
+            status = (remainingMs + 999L) / 1_000L + "s";
             progress = Math.clamp(remainingMs / (float) COOLDOWN_MS, 0F, 1F);
         } else {
-            status = "RDY";
-            statusColor = READY_TEXT;
+            status = "READY";
             progress = 1F;
         }
 
-        int textX = x + (TILE_WIDTH - mc.font.width(status)) / 2;
-        graphics.text(mc.font, status, textX, y + 21, statusColor.getRGB(), true);
+        // 两层圆角矩形形成细描边，不依赖额外的 stroke 工具。
+        RenderUtils.drawRect(canvasStack, x, y, SLOT_WIDTH, SLOT_HEIGHT, 4F, stateColor);
+        RenderUtils.drawRect(
+                canvasStack, x + 0.75F, y + 0.75F,
+                SLOT_WIDTH - 1.5F, SLOT_HEIGHT - 1.5F, 3.5F, SLOT_INNER_COLOR
+        );
 
-        int innerWidth = TILE_WIDTH - 2;
-        int progressWidth = Math.round(innerWidth * progress);
-        Color progressColor = coolingDown ? COOLDOWN_PROGRESS : READY_PROGRESS;
-        graphics.fill(
-                x + 1,
-                y + TILE_HEIGHT - PROGRESS_HEIGHT - 1,
-                x + 1 + progressWidth,
-                y + TILE_HEIGHT - 1,
-                progressColor.getRGB()
+        String index = "#" + (slot + 1);
+        indexFont.drawShadowString(canvasStack, index, x + 3F, y + 1.5F, MUTED_TEXT_COLOR, true);
+
+        // 右上角的小状态灯可以在不读文字时快速判断槽位状态。
+        RenderUtils.drawRect(canvasStack, x + SLOT_WIDTH - 6F, y + 3F, 3F, 3F, 1.5F, stateColor);
+
+        slotFont.drawShadowString(
+                canvasStack,
+                status,
+                x + (SLOT_WIDTH - slotFont.getWidth(status)) * 0.5F,
+                y + 9F,
+                coolingDown ? PRIMARY_TEXT_COLOR : READY_COLOR,
+                true
+        );
+
+        RenderUtils.drawRect(
+                canvasStack, x + 3F, y + SLOT_HEIGHT - 4F,
+                SLOT_WIDTH - 6F, 2F, 1F, SLOT_COLOR
+        );
+        RenderUtils.drawRect(
+                canvasStack, x + 3F, y + SLOT_HEIGHT - 4F,
+                (SLOT_WIDTH - 6F) * progress, 2F, 1F, stateColor
         );
     }
 
@@ -182,21 +230,6 @@ public class LightningRodQueue extends AbstractModule {
     /** 正式环境仅 Zombies；集成服务器用于单人指令测试闪电检测与 UI。 */
     private boolean isTrackingEnvironment() {
         return PlayerUtils.isInHypZombies() || mc.hasSingleplayerServer();
-    }
-
-    /** ItemStack 依赖已绑定的物品组件，不能在客户端入口初始化阶段静态创建。 */
-    private ItemStack getSlotIcon(boolean coolingDown) {
-        if (coolingDown) {
-            if (cooldownIcon == null) {
-                cooldownIcon = new ItemStack(Items.GRAY_DYE);
-            }
-            return cooldownIcon;
-        }
-
-        if (lightningRodIcon == null) {
-            lightningRodIcon = new ItemStack(Items.BLAZE_ROD);
-        }
-        return lightningRodIcon;
     }
 
     @Override

@@ -8,12 +8,18 @@ import com.example.client.config.ZombiesConfig;
 import com.example.client.data.ZombiesGuns;
 import com.example.client.events.FabricEvents;
 import com.example.client.events.KeyInputEvent;
+import com.example.client.events.MouseInputEvent;
+import com.example.client.events.SkiaEvent;
 import com.example.client.gui.ZombiesConfigScreen;
 import com.example.client.module.AbstractModule;
 import com.example.client.module.ModuleManager;
+import com.example.client.skia.CanvasStack;
+import com.example.client.skia.Skia;
+import com.example.client.skia.fbo.GameFramebuffer;
 import com.example.client.tracker.ServerTracker;
 import com.example.client.utils.ChatUtils;
 import com.example.client.utils.IMinecraft;
+import com.example.client.utils.InputBindingUtils;
 import net.fabricmc.api.ClientModInitializer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -34,6 +40,14 @@ public class ZombiesModClient implements ClientModInitializer, IMinecraft {
 
 		ZombiesConfig.load();
 		EventManager.register(this);
+		System.out.println("SKIA INIT1111111111111!!!!!");
+
+		Skia.queueAndInit(
+				ZombiesModClient::renderTest
+		);
+	}
+	public static void renderTest(CanvasStack canvasStack, GameFramebuffer customLayer) {
+		EventManager.call(new SkiaEvent(canvasStack, customLayer));
 	}
 	@EventTarget
 	public void onKey(KeyInputEvent event) {
@@ -64,7 +78,23 @@ public class ZombiesModClient implements ClientModInitializer, IMinecraft {
 //
 //			System.out.println("  components: " + s.getComponents());
 //		}
-		if (event.getKey() == guiKey) {
+		handleBinding(event.getKey(), false);
+	}
+
+	@EventTarget
+	public void onMouse(MouseInputEvent event) {
+		if (mc.player == null || mc.level == null || mc.screen != null) {
+			return;
+		}
+		if (event.getAction() != GLFW.GLFW_PRESS
+				|| !InputBindingUtils.isBindableMouseButton(event.getButton())) {
+			return;
+		}
+		handleBinding(event.getButton(), true);
+	}
+
+	private void handleBinding(int input, boolean mouse) {
+		if (matches(guiKey, input, mouse)) {
 			if (ZombiesConfigScreen.instance == null) {
 				ZombiesConfigScreen.instance = new ZombiesConfigScreen(null);
 			}
@@ -74,7 +104,7 @@ public class ZombiesModClient implements ClientModInitializer, IMinecraft {
 
 		// 模块快捷键：切换绑定了该键的模块
 		for (AbstractModule m : moduleManager.getModuleList()) {
-			if (m.getKey() != 0 && m.getKey() == event.getKey()) {
+			if (matches(m.getKey(), input, mouse)) {
 				m.toggle();
 				ZombiesConfig.save();
 			}
@@ -83,12 +113,17 @@ public class ZombiesModClient implements ClientModInitializer, IMinecraft {
 		// 枪械快捷键：切换绑定了该键的枪的自动切换开关
 		for (ZombiesGuns gun : ZombiesGuns.values()) {
 			AutoSwitchWeaponConfig.GunSwitchSetting cfg = AutoSwitchWeaponConfig.get(gun);
-			if (cfg.getKey() != 0 && cfg.getKey() == event.getKey()) {
+			if (matches(cfg.getKey(), input, mouse)) {
 				cfg.setEnabled(!cfg.isEnabled());
 				ChatUtils.print(ChatFormatting.YELLOW + gun.getDisplayName() + ChatFormatting.GRAY + " was " + (cfg.isEnabled() ? (ChatFormatting.GREEN + "Enabled") : (ChatFormatting.RED + "Disabled")));
 				ZombiesConfig.save();
 			}
 		}
+	}
 
+	private static boolean matches(int binding, int input, boolean mouse) {
+		return mouse
+				? InputBindingUtils.matchesMouse(binding, input)
+				: InputBindingUtils.matchesKeyboard(binding, input);
 	}
 }
