@@ -10,12 +10,12 @@ import com.example.client.events.ChatEvent;
 import com.example.client.events.PacketEvent;
 import com.example.client.events.SoundPacketEvent;
 import com.example.client.events.TickEvent;
+import com.example.client.language.GuiText;
 import com.example.client.module.AbstractModule;
 import com.example.client.module.modules.DPSCounter;
 import com.example.client.module.modules.Notification;
 import com.example.client.module.modules.TargetHud;
 import com.example.client.utils.*;
-import com.example.client.utils.render.ToastUtils;
 import com.example.client.utils.record.HitResult;
 import com.example.client.utils.record.ShotRecord;
 import net.minecraft.ChatFormatting;
@@ -109,6 +109,8 @@ public class ServerTracker implements IMinecraft {
             TeammateTracker.clear();
             GameStatTracker.clear();
             lastRoundStartGold = -1; // 离开/换局，重置金币快照
+            roundTime = 0L;
+            currentRound = -1;
             // 注意：不在这里 reset powerup！倒地/过场会让挖掘疲劳瞬间消失被误判为"离开"，
             // 从而清掉已锁定的道具模式（INSTA 表只到 23 回合，清了就再也锁不回 → 永远 ?）。
             // 道具预测改为只在"新一局开始"时重置（见 onPacketTrack 回合标题处）。
@@ -122,6 +124,11 @@ public class ServerTracker implements IMinecraft {
             roundStartSound = false;
 
             int lastRound = currentRound - 1;
+
+            if (currentRound == 1) {
+                roundTime = System.currentTimeMillis();
+                return;
+            }
 
             // 上回合金币变化：从计分板读我当前金币，与上回合开始时的快照对比
             long myGold = getMyScoreboardGold();
@@ -138,14 +145,17 @@ public class ServerTracker implements IMinecraft {
 
             long time = System.currentTimeMillis() - roundTime;
             String timeStr = formatSeconds((int) (time / 1000L));
-            Component message = Component.literal("You completed ").withStyle(ChatFormatting.AQUA)
-                    .append(Component.literal("Round " + lastRound).withStyle(ChatFormatting.RED))
-                    .append(Component.literal(" in ").withStyle(ChatFormatting.YELLOW))
-                    .append(Component.literal(timeStr)).withStyle(ChatFormatting.GREEN)
+                Component message = GuiText.text("toast.completed").copy().withStyle(ChatFormatting.AQUA)
+                    .append(GuiText.text("toast.round", lastRound).copy().withStyle(ChatFormatting.RED))
+                    .append(GuiText.text("toast.in").copy().withStyle(ChatFormatting.YELLOW))
+                    .append(Component.literal(timeStr).withStyle(ChatFormatting.GREEN))
                     .append(Component.literal("!").withStyle(ChatFormatting.YELLOW));
-            AbstractModule notification = ZombiesModClient.moduleManager.getModule("Notification");
+            AbstractModule notification = ZombiesModClient.moduleManager.getModule("module.notification");
             if(notification.isEnable() && Notification.roundRecorder.getValue()) {
-                ToastUtils.show("Round Recorder", message);
+                ChatUtils.print(Component.literal("[")
+                    .append(GuiText.text("toast.round_recorder"))
+                    .append(Component.literal("] "))
+                    .append(message));
             }
 
             roundTime = System.currentTimeMillis();
@@ -153,8 +163,17 @@ public class ServerTracker implements IMinecraft {
 
             if(notification.isEnable() && Notification.roundSuggest.getValue()) {
                 if(ZombiesUtils.getMap() == ZombiesMap.ALIEN_ARCADIUM) {
-                    ToastUtils.show("Round " + currentRound, ZombiesSpawnTable.getMonsters(currentRound), 8000);
-                    ToastUtils.show("Round " + currentRound, ZombiesSpawnTable.getLocation(currentRound), 8000);
+                    int nextRound = currentRound + 1;
+                    ZombiesSpawnTable.SpawnInfo info = ZombiesSpawnTable.get(nextRound);
+                    if (info != null) {
+                        Component spawnMessage = GuiText.text("toast.monsters", info.monsters()).copy()
+                            .withStyle(ChatFormatting.GREEN)
+                                .append(Component.literal("\n"))
+                                .append(GuiText.text("toast.location", info.location()).copy().withStyle(ChatFormatting.GREEN));
+                        ChatUtils.print(GuiText.text("toast.next_round", nextRound).copy().withStyle(ChatFormatting.GREEN)
+                            .append(Component.literal("\n"))
+                            .append(spawnMessage));
+                    }
                 }
 
             }
@@ -309,6 +328,7 @@ public class ServerTracker implements IMinecraft {
                 // 不用 round<currentRound：带数字的非回合标题（道具/特效等）会误触发清空。
                 if (round == 1) {
                     powerup.reset();
+                    roundTime = System.currentTimeMillis();
                 }
                 currentRound = round;
             }

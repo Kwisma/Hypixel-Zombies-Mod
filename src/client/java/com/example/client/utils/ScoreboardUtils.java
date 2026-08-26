@@ -22,7 +22,7 @@ public class ScoreboardUtils implements IMinecraft {
     }
     public record ScorePlayer(
             String name,
-            long gold,
+            Long gold,
             TeammateInfo.PlayerState state,
             String statusText
     ) {}
@@ -53,11 +53,11 @@ public class ScoreboardUtils implements IMinecraft {
 
 
             String name = text;
-            long gold = 0L;
+            Long gold = null;
             TeammateInfo.PlayerState state = TeammateInfo.PlayerState.ALIVE;
             String statusText = "";
             // 用第一个冒号分隔（玩家名不含冒号）。左边永远是真名；
-            // 右边是数字 = 金币（活着），是状态文字（已死亡/等待救援/复活中…）= 倒地，金币记 0。
+            // 右边是数字 = 金币（活着），是状态文字（已死亡/等待救援/复活中…）= 倒地。
             int colon = text.indexOf(':');
             if (colon > 0) {
                 String left = text.substring(0, colon).trim();
@@ -67,7 +67,10 @@ public class ScoreboardUtils implements IMinecraft {
                     gold = Long.parseLong(right);
                 } else {
                     statusText = right;
-                    state = hasTerminalRedColor(component)
+                    String normalizedStatus = right.toUpperCase(java.util.Locale.ROOT);
+                    boolean dead = normalizedStatus.contains("DEAD") || normalizedStatus.contains("死亡");
+                    boolean quit = normalizedStatus.contains("QUIT") || normalizedStatus.contains("退出");
+                    state = dead || quit || hasTerminalRedColor(component)
                             ? TeammateInfo.PlayerState.TERMINAL
                             : TeammateInfo.PlayerState.DOWN;
                 }
