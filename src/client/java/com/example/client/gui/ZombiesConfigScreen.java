@@ -224,10 +224,8 @@ public class ZombiesConfigScreen extends Screen {
     public boolean keyPressed(@NotNull KeyEvent event) {
         if (this.listeningForKey) {
             int key = event.key();
-            if (key != GLFW.GLFW_KEY_ESCAPE) {
-                ZombiesModClient.guiKey = key;
-                ZombiesConfig.save();
-            }
+            ZombiesModClient.guiKey = key == GLFW.GLFW_KEY_ESCAPE ? 0 : key;
+            ZombiesConfig.save();
             this.listeningForKey = false;
             rebuild();
             return true;
@@ -255,6 +253,9 @@ public class ZombiesConfigScreen extends Screen {
     }
 
     private static Component bindText() {
+        if (ZombiesModClient.guiKey == 0) {
+            return GuiText.text("gui_bind").copy().append(GuiText.text("none").copy().withStyle(ChatFormatting.GRAY));
+        }
         String keyName = InputConstants.Type.KEYSYM.getOrCreate(ZombiesModClient.guiKey).getDisplayName().getString();
         return GuiText.text("gui_bind").copy().append(Component.literal(keyName).withStyle(ChatFormatting.AQUA));
     }

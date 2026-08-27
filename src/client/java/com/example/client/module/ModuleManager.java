@@ -15,7 +15,7 @@ public class ModuleManager {
 
     public ModuleManager() {
         add(new AutoSwitchWeapon(), new HideBlockingPlayer(), new HideZombies(), new RightClicker(), new Sprint(), new TargetHud());
-        add(new NoFireEffect(), new TeammatesGlow(), new DPSCounter(), new Notification(), new NoGunFire());
+        add(new NoFireEffect(), new TeammatesGlow(), new SidebarModification(), new DPSCounter(), new Notification(), new NoGunFire());
         add(new ZombieChams());
         add(new BadHeadshot());
 //        add(new BlockTransparency());
