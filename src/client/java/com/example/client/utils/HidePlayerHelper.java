@@ -12,7 +12,7 @@ import net.minecraft.world.phys.AABB;
 
 public class HidePlayerHelper implements IMinecraft {
     public static boolean shouldFade(Player target) {
-        HideBlockingPlayer hideBlockingPlayer = ((HideBlockingPlayer) ZombiesModClient.moduleManager.getModule("Hide Blocking Player"));
+        HideBlockingPlayer hideBlockingPlayer = ((HideBlockingPlayer) ZombiesModClient.moduleManager.getModule("module.hide_blocking_player"));
         if(hideBlockingPlayer == null) return false;
         if(!hideBlockingPlayer.isEnable()) return false;
 
@@ -34,7 +34,7 @@ public class HidePlayerHelper implements IMinecraft {
     }
 
     public static boolean shouldFade(Zombie target) {
-        HideZombies hideZombies = (HideZombies) ZombiesModClient.moduleManager.getModule("Hide Zombies");
+        HideZombies hideZombies = (HideZombies) ZombiesModClient.moduleManager.getModule("module.hide_zombies");
         if (hideZombies == null || !hideZombies.isEnable()) {
             return false;
         }

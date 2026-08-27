@@ -31,7 +31,7 @@ public class HologramFix extends AbstractModule {
     /** 供 mixin 静态查询：模块是否启用。moduleManager 早期可能为 null，需判空。 */
     public static boolean isActive() {
         if (ZombiesModClient.moduleManager == null) return false;
-        AbstractModule m = ZombiesModClient.moduleManager.getModule("Hologram Fix");
+        AbstractModule m = ZombiesModClient.moduleManager.getModule("module.hologram_fix");
         return m != null && m.isEnable();
     }
 }

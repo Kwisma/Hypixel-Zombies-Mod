@@ -3,6 +3,7 @@ package com.example.client.mixin;
 import com.example.client.tracker.TeammateInfo;
 import com.example.client.tracker.TeammateTracker;
 import com.example.client.language.GuiText;
+import com.example.client.module.modules.SidebarModification;
 import com.example.client.utils.PlayerUtils;
 import com.example.client.utils.ScoreboardUtils;
 import com.example.client.utils.ZombiesUtils;
@@ -44,7 +45,7 @@ public class SidebarHealthMixin {
                         Objective objective,
                         CallbackInfo ci
         ) {
-                if (!zombiesmod$isZombiesMode()) return;
+                if (!SidebarModification.isActive() || !zombiesmod$isZombiesMode()) return;
 
                 Font font = Minecraft.getInstance().font;
                 List<SidebarEntry> entries = zombiesmod$sidebarEntries();
@@ -178,7 +179,8 @@ public class SidebarHealthMixin {
     )
     private int zombiesmod$includeHealthWidth(Font font, FormattedText text) {
         int width = font.width(text);
-                if (!zombiesmod$isZombiesMode() || !(text instanceof Component component)) {
+                if (!SidebarModification.isActive() || !zombiesmod$isZombiesMode()
+                                || !(text instanceof Component component)) {
             return width;
         }
 
@@ -208,7 +210,7 @@ public class SidebarHealthMixin {
             int color,
             boolean shadow
     ) {
-                if (!zombiesmod$isZombiesMode()) {
+                if (!SidebarModification.isActive() || !zombiesmod$isZombiesMode()) {
             graphics.text(font, text, x, y, color, shadow);
             return;
         }

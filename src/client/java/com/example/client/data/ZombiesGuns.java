@@ -39,21 +39,7 @@ public enum ZombiesGuns {
         this.ultimatedDamage = ultimatedDamage;
     }
     public String getDisplayName() {
-        return switch (this) {
-            case Pistol -> "Pistol";
-            case Rifle -> "Rifle";
-            case Rainbow_Rifle -> "Rainbow Rifle";
-            case Shotgun -> "Shotgun";
-            case Rocket_Launcher -> "Rocket Launcher";
-            case Sniper -> "Sniper";
-            case Flamethrower -> "Flamethrower";
-            case Blow_Dart -> "Blow Dart";
-            case Zombie_Soaker -> "Zombie Soaker";
-            case Zombie_Zapper -> "Zombie Zapper";
-            case Double_Barrel_Shotgun -> "Double Barrel Shotgun";
-            case Elder_Gun -> "Elder Gun";
-            case Gold_Digger -> "Gold Digger";
-        };
+        return getLocalizedDisplayName();
     }
 
     public String getLocalizedDisplayName() {

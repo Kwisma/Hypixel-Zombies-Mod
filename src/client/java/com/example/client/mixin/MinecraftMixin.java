@@ -25,7 +25,7 @@ public class MinecraftMixin {
         if (ZombiesModClient.moduleManager == null) return;
 
         // 队友发光（玩家）
-        AbstractModule glow = ZombiesModClient.moduleManager.getModule("Teammates Glow");
+        AbstractModule glow = ZombiesModClient.moduleManager.getModule("module.teammates_glow");
         if (glow != null && glow.isEnable()
                 && entity instanceof Player
                 && !(TeammatesGlow.onlyGame.getValue() && !PlayerUtils.isInHypZombies())) {

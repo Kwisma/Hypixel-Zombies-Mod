@@ -207,7 +207,7 @@ public class BadHeadshot extends AbstractModule {
             return false;
         }
 
-        AbstractModule module = ZombiesModClient.moduleManager.getModule("Bad Headshot");
+        AbstractModule module = ZombiesModClient.moduleManager.getModule("module.bad_headshot");
         if (module == null || !module.isEnable()) {
             return false;
         }

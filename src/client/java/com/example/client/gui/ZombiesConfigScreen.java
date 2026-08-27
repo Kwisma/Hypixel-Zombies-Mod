@@ -42,6 +42,7 @@ public class ZombiesConfigScreen extends Screen {
 
     private boolean listeningForKey = false;       // 绑定"打开GUI"的键
     private AbstractModule listeningModule = null; // 绑定某模块的开关键
+    private Button guiBindButton;
 
     private static final int SIDE = 20;
     private static final int TABS_Y = 26;
@@ -89,9 +90,9 @@ public class ZombiesConfigScreen extends Screen {
         this.addRenderableWidget(this.settingsPanel);
 
         // ---- 底部：Gui Bind + Done ----
-        this.addRenderableWidget(Button.builder(bindText(), b -> {
+        this.guiBindButton = this.addRenderableWidget(Button.builder(bindText(), b -> {
             this.listeningForKey = true;
-                b.setMessage(GuiText.text("gui_bind").copy().append(Component.literal("<...>").withStyle(ChatFormatting.YELLOW)));
+            b.setMessage(GuiText.text("gui_bind").copy().append(Component.literal("<...>").withStyle(ChatFormatting.YELLOW)));
         }).bounds(SIDE, this.height - 26, 150, 20).build());
 
         this.addRenderableWidget(Button.builder(GuiText.text("done"),
@@ -224,11 +225,10 @@ public class ZombiesConfigScreen extends Screen {
     public boolean keyPressed(@NotNull KeyEvent event) {
         if (this.listeningForKey) {
             int key = event.key();
-            if (key != GLFW.GLFW_KEY_ESCAPE) {
-                ZombiesModClient.guiKey = key;
-                ZombiesConfig.save();
-            }
+            ZombiesModClient.guiKey = key == GLFW.GLFW_KEY_ESCAPE ? 0 : key;
+            ZombiesConfig.save();
             this.listeningForKey = false;
+            this.guiBindButton.setMessage(bindText());
             rebuild();
             return true;
         }
@@ -255,6 +255,9 @@ public class ZombiesConfigScreen extends Screen {
     }
 
     private static Component bindText() {
+        if (ZombiesModClient.guiKey == 0) {
+            return GuiText.text("gui_bind").copy().append(GuiText.text("none").copy().withStyle(ChatFormatting.GRAY));
+        }
         String keyName = InputConstants.Type.KEYSYM.getOrCreate(ZombiesModClient.guiKey).getDisplayName().getString();
         return GuiText.text("gui_bind").copy().append(Component.literal(keyName).withStyle(ChatFormatting.AQUA));
     }

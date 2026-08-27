@@ -29,7 +29,7 @@ public class ScreenEffectRendererMixin {
             TextureAtlasSprite sprite,
             CallbackInfo ci
     ) {
-        AbstractModule noFire = ZombiesModClient.moduleManager.getModule("No Fire Effect");
+        AbstractModule noFire = ZombiesModClient.moduleManager.getModule("module.no_fire_effect");
 
         if (noFire == null || !noFire.isEnable()) {
             return;
