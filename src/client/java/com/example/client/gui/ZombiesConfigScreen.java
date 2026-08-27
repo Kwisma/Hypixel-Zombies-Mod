@@ -23,6 +23,8 @@ import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.Locale;
+
 /**
  * 主配置界面：顶部 Tab(Features / Guns Config)+ 左模块列表(可搜索) + 右设置面板(选中模块的设置)。
  * Guns Config 复用 {@link AutoSwitchWeaponScreen}（点标签切过去）。
@@ -298,6 +300,7 @@ public class ZombiesConfigScreen extends Screen {
 
     private static Component modeText(String name, Object value) {
         return Component.literal(name + ": ")
-                .append(Component.literal(GuiText.mode(String.valueOf(value))).withStyle(ChatFormatting.AQUA));
+                .append(GuiText.text(String.valueOf(value).toLowerCase(Locale.ROOT)).copy()
+                        .withStyle(ChatFormatting.AQUA));
     }
 }

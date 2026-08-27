@@ -83,9 +83,9 @@
   "zombies-mod.toast.in": " in ",
   "zombies-mod.toast.next_round": "Next Round %s",
   "zombies-mod.toast.monsters": "Monsters: %s",
-  "zombies-mod.toast.location": "Defend at: %s"
-  ,"zombies-mod.chat.enabled": " was Enabled"
-  ,"zombies-mod.chat.disabled": " was Disabled",
+  "zombies-mod.toast.location": "Defend at: %s",
+  "zombies-mod.chat.enabled": " was Enabled",
+  "zombies-mod.chat.disabled": " was Disabled",
   "zombies-mod.module.auto_switch_weapon": "Auto Switch Weapon",
   "zombies-mod.setting.switch_delay": "Switch Delay",
   "zombies-mod.setting.guns_config": "Guns Config",
@@ -109,6 +109,8 @@
   "zombies-mod.module.hide_zombies": "Hide Zombies",
   "zombies-mod.module.hologram_fix": "Hologram Fix",
   "zombies-mod.module.hud": "Hud",
+  "zombies-mod.setting.preshoot_preset": "Preshoot HUD",
+  "zombies-mod.gui.zoomed_crosshair": "Zoomed Crosshair",
   "zombies-mod.module.lightning_rod_queue": "Lightning Rod Queue",
   "zombies-mod.setting.x": "X",
   "zombies-mod.setting.y": "Y",

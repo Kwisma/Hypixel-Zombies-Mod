@@ -83,9 +83,9 @@
   "zombies-mod.toast.in": "回合，用时 ",
   "zombies-mod.toast.next_round": "下一回合 %s",
   "zombies-mod.toast.monsters": "出怪：%s",
-  "zombies-mod.toast.location": "守点：%s"
-  ,"zombies-mod.chat.enabled": " 已启用"
-  ,"zombies-mod.chat.disabled": " 已禁用",
+  "zombies-mod.toast.location": "守点：%s",
+  "zombies-mod.chat.enabled": " 已启用",
+  "zombies-mod.chat.disabled": " 已禁用",
   "zombies-mod.module.auto_switch_weapon": "自动切换武器",
   "zombies-mod.setting.switch_delay": "切换延迟",
   "zombies-mod.setting.guns_config": "枪械配置",
@@ -109,6 +109,8 @@
   "zombies-mod.module.hide_zombies": "隐藏阻挡僵尸",
   "zombies-mod.module.hologram_fix": "全息字穿透",
   "zombies-mod.module.hud": "Hud",
+  "zombies-mod.setting.preshoot_preset": "预瞄 HUD",
+  "zombies-mod.gui.zoomed_crosshair": "放大准星",
   "zombies-mod.module.lightning_rod_queue": "LRod 队列",
   "zombies-mod.setting.x": "X",
   "zombies-mod.setting.y": "Y",

@@ -23,13 +23,4 @@ public final class GuiText {
         return text(key, args).getString();
     }
 
-    public static String mode(String value) {
-        return switch (value) {
-            case "Interval" -> textString("interval");
-            case "Cooldown" -> textString("cooldown");
-            case "Simulate" -> textString("simulate");
-            case "Key" -> textString("key_mode");
-            default -> value;
-        };
-    }
 }
