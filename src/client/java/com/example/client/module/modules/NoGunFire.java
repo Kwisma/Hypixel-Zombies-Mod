@@ -24,7 +24,7 @@ public class NoGunFire extends AbstractModule {
             return false;
         }
 
-        NoGunFire module = ((NoGunFire) ZombiesModClient.moduleManager.getModule("No Gun Fire"));
+        NoGunFire module = ((NoGunFire) ZombiesModClient.moduleManager.getModule("module.no_gun_fire"));
 
         if (module == null || !module.isEnable()) {
             return false;

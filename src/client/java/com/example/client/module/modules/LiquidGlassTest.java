@@ -24,7 +24,7 @@ public class LiquidGlassTest extends AbstractModule {
 
     public static void renderIfEnabled() {
     //        AbstractModule m = ZombiesModClient.moduleManager == null ? null
-    //                : ZombiesModClient.moduleManager.getModule("Liquid Glass Test");
+    //                : ZombiesModClient.moduleManager.getModule("module.liquid_glass_test");
     //        if (m == null || !m.isEnable()) return;
     //
     //        Minecraft mc = Minecraft.getInstance();

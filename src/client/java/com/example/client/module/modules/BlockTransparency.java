@@ -31,7 +31,7 @@ public class BlockTransparency extends AbstractModule {
     }
     public static final int ALPHA = 128;
     public static boolean isActive() {
-        AbstractModule m = ZombiesModClient.moduleManager.getModule("Slab See-Through");
+        AbstractModule m = ZombiesModClient.moduleManager.getModule("module.block_transparency");
         return m != null && m.isEnable();
     }
 
