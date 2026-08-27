@@ -6,13 +6,11 @@ public final class GuiText {
     private GuiText() {}
 
     public static Component text(String key) {
-        String translationKey = key.contains(".") ? "zombies-mod." + key : "zombies-mod.gui." + key;
-        return Component.translatable(translationKey);
+        return Component.translatable("zombies-mod." + key);
     }
 
     public static Component text(String key, Object... args) {
-        String translationKey = key.contains(".") ? "zombies-mod." + key : "zombies-mod.gui." + key;
-        return Component.translatable(translationKey, args);
+        return Component.translatable("zombies-mod." + key, args);
     }
 
     public static String textString(String key) {

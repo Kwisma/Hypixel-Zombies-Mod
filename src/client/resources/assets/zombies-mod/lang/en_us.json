@@ -80,6 +80,7 @@
   "zombies-mod.toast.round_recorder": "Round Recorder",
   "zombies-mod.toast.completed": "You completed ",
   "zombies-mod.toast.round": "Round %s",
+  "zombies-mod.toast.round_gold": "Round %s Gold %s",
   "zombies-mod.toast.in": " in ",
   "zombies-mod.toast.next_round": "Next Round %s",
   "zombies-mod.toast.monsters": "Monsters: %s",
@@ -136,5 +137,17 @@
   "zombies-mod.setting.info": "Info",
   "zombies-mod.module.wave_display": "Wave Display",
   "zombies-mod.module.sidebar_modification": "Sidebar Teammate Info",
-  "zombies-mod.module.zombie_chams": "Zombie Chams"
+  "zombies-mod.module.zombie_chams": "Zombie Chams",
+  "zombies-mod.game_stat.activated": "%s activated (%ss)",
+  "zombies-mod.game_stat.prefix": "[GameStat] ",
+  "zombies-mod.game_stat.collected": "%s collected",
+  "zombies-mod.game_stat.expiring": "%s is about to disappear",
+  "zombies-mod.game_stat.expired": "%s expired",
+  "zombies-mod.game_stat.dropped": "%s dropped",
+  "zombies-mod.game_stat.double_gold": "Double Gold",
+  "zombies-mod.game_stat.shopping_spree": "Shopping Spree",
+  "zombies-mod.game_stat.insta_kill": "Insta Kill",
+  "zombies-mod.game_stat.max_ammo": "Max Ammo",
+  "zombies-mod.debug.round": "Round %s",
+  "zombies-mod.debug.hit_no_matching_shot": "HIT but no matching shot | gold=%s | critical=%s"
 }
