@@ -12,16 +12,33 @@ public class PositionEditorScreen extends Screen {
     private final Screen parent;
     private final NumberSetting posX;
     private final NumberSetting posY;
+    private final boolean centerX;
     private boolean dragging;
+    private double dragOffsetX;
+    private double dragOffsetY;
 
-    private static final int PREVIEW_WIDTH = 180;
-    private static final int PREVIEW_HEIGHT = 42;
+    private static final int DEFAULT_PREVIEW_WIDTH = 180;
+    private static final int DEFAULT_PREVIEW_HEIGHT = 42;
+    private final int previewWidth;
+    private final int previewHeight;
 
     public PositionEditorScreen(Screen parent, NumberSetting posX, NumberSetting posY) {
+        this(parent, posX, posY, false, DEFAULT_PREVIEW_WIDTH, DEFAULT_PREVIEW_HEIGHT);
+    }
+
+    public PositionEditorScreen(Screen parent, NumberSetting posX, NumberSetting posY, boolean centerX) {
+        this(parent, posX, posY, centerX, DEFAULT_PREVIEW_WIDTH, DEFAULT_PREVIEW_HEIGHT);
+    }
+
+    public PositionEditorScreen(Screen parent, NumberSetting posX, NumberSetting posY,
+                                boolean centerX, int previewWidth, int previewHeight) {
         super(Component.translatable("zombies-mod.gui.position_editor"));
         this.parent = parent;
         this.posX = posX;
         this.posY = posY;
+        this.centerX = centerX;
+        this.previewWidth = previewWidth;
+        this.previewHeight = previewHeight;
     }
 
     @Override
@@ -31,11 +48,11 @@ public class PositionEditorScreen extends Screen {
 
         int x = previewX();
         int y = previewY();
-        graphics.fill(x, y, x + PREVIEW_WIDTH, y + PREVIEW_HEIGHT, 0xDD26384A);
-        graphics.fill(x, y, x + PREVIEW_WIDTH, y + 1, 0xFF66CCFF);
-        graphics.fill(x, y + PREVIEW_HEIGHT - 1, x + PREVIEW_WIDTH, y + PREVIEW_HEIGHT, 0xFF66CCFF);
-        graphics.fill(x, y, x + 1, y + PREVIEW_HEIGHT, 0xFF66CCFF);
-        graphics.fill(x + PREVIEW_WIDTH - 1, y, x + PREVIEW_WIDTH, y + PREVIEW_HEIGHT, 0xFF66CCFF);
+        graphics.fill(x, y, x + previewWidth, y + previewHeight, 0xDD26384A);
+        graphics.fill(x, y, x + previewWidth, y + 1, 0xFF66CCFF);
+        graphics.fill(x, y + previewHeight - 1, x + previewWidth, y + previewHeight, 0xFF66CCFF);
+        graphics.fill(x, y, x + 1, y + previewHeight, 0xFF66CCFF);
+        graphics.fill(x + previewWidth - 1, y, x + previewWidth, y + previewHeight, 0xFF66CCFF);
 
         Component coordinates = Component.literal(String.format("X: %.2f  Y: %.2f",
                 posX.getValue().doubleValue(), posY.getValue().doubleValue()));
@@ -49,6 +66,8 @@ public class PositionEditorScreen extends Screen {
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         if (event.button() == 0 && isInsidePreview(event.x(), event.y())) {
             dragging = true;
+            dragOffsetX = event.x() - previewX();
+            dragOffsetY = event.y() - previewY();
             updatePosition(event.x(), event.y());
             return true;
         }
@@ -81,23 +100,34 @@ public class PositionEditorScreen extends Screen {
     }
 
     private int previewX() {
-        return Math.clamp((int) (this.width * posX.getValue().doubleValue()), 0,
-                Math.max(0, this.width - PREVIEW_WIDTH));
+        int x = (int) (this.width * posX.getValue().doubleValue())
+            - (centerX ? previewWidth / 2 : 0);
+        return Math.clamp(x, 0,
+            Math.max(0, this.width - previewWidth));
     }
 
     private int previewY() {
         return Math.clamp((int) (this.height * posY.getValue().doubleValue()), 0,
-                Math.max(0, this.height - PREVIEW_HEIGHT));
+            Math.max(0, this.height - previewHeight));
     }
 
     private boolean isInsidePreview(double mouseX, double mouseY) {
-        return mouseX >= previewX() && mouseX <= previewX() + PREVIEW_WIDTH
-                && mouseY >= previewY() && mouseY <= previewY() + PREVIEW_HEIGHT;
+        return mouseX >= previewX() && mouseX <= previewX() + previewWidth
+            && mouseY >= previewY() && mouseY <= previewY() + previewHeight;
     }
 
     private void updatePosition(double mouseX, double mouseY) {
-        double x = Math.clamp(mouseX / Math.max(1, this.width), 0.0D, 1.0D);
-        double y = Math.clamp(mouseY / Math.max(1, this.height), 0.0D, 1.0D);
+        double left = mouseX - dragOffsetX;
+        double top = mouseY - dragOffsetY;
+        double x = (left + (centerX ? previewWidth / 2.0D : 0.0D))
+                / Math.max(1, this.width);
+        double y = top / Math.max(1, this.height);
+        double halfWidth = centerX ? previewWidth / 2.0D : 0.0D;
+        double minX = halfWidth / Math.max(1, this.width);
+        double maxX = (this.width - halfWidth) / (double) Math.max(1, this.width);
+        double maxY = (this.height - previewHeight) / (double) Math.max(1, this.height);
+        x = Math.clamp(x, minX, Math.max(minX, maxX));
+        y = Math.clamp(y, 0.0D, Math.max(0.0D, maxY));
         posX.setValue(x);
         posY.setValue(y);
     }
