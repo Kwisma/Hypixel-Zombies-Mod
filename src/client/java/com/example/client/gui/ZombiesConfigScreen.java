@@ -143,6 +143,7 @@ public class ZombiesConfigScreen extends Screen {
 
         int sw = rightW - 24;
         int y = 8;
+        NumberSetting positionX = null;
 
         settingsPanel.addScrollText(selected.getName(), 12, y, 0xFFFFFFFF, true);
         y += 18;
@@ -195,6 +196,18 @@ public class ZombiesConfigScreen extends Screen {
                             value -> { numberSetting.setValue(value); ZombiesConfig.save(); }
                     ), 12, y);
                     y += ITEM_H;
+                            if ("setting.x".equals(setting.getNameKey())) {
+                            positionX = numberSetting;
+                            } else if ("setting.y".equals(setting.getNameKey()) && positionX != null) {
+                            NumberSetting positionXSetting = positionX;
+                            NumberSetting positionY = numberSetting;
+                            settingsPanel.addScrollWidget(Button.builder(
+                                GuiText.text("gui.change_position"),
+                                button -> Minecraft.getInstance().gui.setScreen(
+                                    new PositionEditorScreen(this, positionXSetting, positionY)))
+                                .bounds(0, 0, sw, 20).build(), 12, y);
+                            y += ITEM_H;
+                            }
                 }
                 case ModeSetting modeSetting -> {
                     settingsPanel.addScrollWidget(Button.builder(
