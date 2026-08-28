@@ -160,6 +160,18 @@ public class ServerTracker implements IMinecraft {
             }
 
             roundTime = System.currentTimeMillis();
+            if (notification.isEnable() && Notification.aaRoundChat.getValue()
+                    && ZombiesUtils.getMap() == ZombiesMap.ALIEN_ARCADIUM) {
+                ZombiesSpawnTable.SpawnInfo info = ZombiesSpawnTable.get(currentRound);
+                if (info != null) {
+                    Component spawnMessage = GuiText.text("toast.round", currentRound).copy()
+                            .append(Component.literal(" "))
+                            .append(GuiText.text("toast.monsters", info.monsters()))
+                            .append(Component.literal(" "))
+                            .append(GuiText.text("toast.location", info.location()));
+                    mc.player.connection.sendChat(spawnMessage.getString());
+                }
+            }
 //            debug("回合开始 " + currentRound);
 
             if(notification.isEnable() && Notification.roundSuggest.getValue()) {

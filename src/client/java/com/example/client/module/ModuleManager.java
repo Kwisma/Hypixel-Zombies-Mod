@@ -14,7 +14,7 @@ public class ModuleManager {
     private final ArrayList<AbstractModule> moduleList = new ArrayList<>();
 
     public ModuleManager() {
-        add(new AutoSwitchWeapon(), new HideBlockingPlayer(), new HideZombies(), new RightClicker(), new Sprint(), new TargetHud());
+        add(new AutoSwitchWeapon(), new HideBlockingPlayer(), new HideZombies(), new RightClicker(), new Sprint(), new TargetHud(), new EyeHeight());
         add(new NoFireEffect(), new TeammatesGlow(), new SidebarModification(), new DPSCounter(), new Notification(), new NoGunFire());
         add(new ZombieChams());
         add(new BadHeadshot());

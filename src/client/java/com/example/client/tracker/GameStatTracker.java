@@ -3,6 +3,7 @@ package com.example.client.tracker;
 import com.example.client.utils.IMinecraft;
 import com.example.client.data.PowerupPredictor;
 import com.example.client.language.GuiText;
+import com.example.client.module.modules.Notification;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
@@ -135,9 +136,11 @@ public class GameStatTracker implements IMinecraft {
             return;
         }
 
-        mc.gui.chatListener().handleSystemMessage(
-            GuiText.text("game_stat.prefix").copy().append(text),
-                false
-        );
+        Component message = GuiText.text("game_stat.prefix").copy().append(text);
+        mc.gui.chatListener().handleSystemMessage(message, false);
+
+        if (Boolean.TRUE.equals(Notification.gameStatChat.getValue())) {
+            mc.player.connection.sendChat(text.getString());
+        }
     }
 }

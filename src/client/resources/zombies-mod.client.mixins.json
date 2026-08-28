@@ -29,6 +29,7 @@
     "GuiRendererGradientMixin",
     "GuiTextRenderStateGradientMixin",
     "MinecraftMixin",
+    "EyeHeightMixin",
     "SidebarHealthMixin",
     "LocalPlayerPickMixin",
     "render.GuiRendererBlurMixin",
