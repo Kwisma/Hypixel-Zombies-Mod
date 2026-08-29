@@ -119,13 +119,16 @@ public class PositionEditorScreen extends Screen {
     private void updatePosition(double mouseX, double mouseY) {
         double left = mouseX - dragOffsetX;
         double top = mouseY - dragOffsetY;
-        double x = (left + (centerX ? previewWidth / 2.0D : 0.0D))
-                / Math.max(1, this.width);
-        double y = top / Math.max(1, this.height);
-        double halfWidth = centerX ? previewWidth / 2.0D : 0.0D;
-        double minX = halfWidth / Math.max(1, this.width);
-        double maxX = (this.width - halfWidth) / (double) Math.max(1, this.width);
-        double maxY = (this.height - previewHeight) / (double) Math.max(1, this.height);
+        double width = Math.max(1, this.width);
+        double height = Math.max(1, this.height);
+
+        double x = (left + (centerX ? previewWidth / 2.0D : 0.0D)) / width;
+        double y = top / height;
+
+        double minX = centerX ? (previewWidth / 2.0D) / width : 0.0D;
+        double maxX = (this.width - (centerX ? previewWidth / 2.0D : previewWidth)) / width;
+        double maxY = (this.height - previewHeight) / height;
+
         x = Math.clamp(x, minX, Math.max(minX, maxX));
         y = Math.clamp(y, 0.0D, Math.max(0.0D, maxY));
         posX.setValue(x);

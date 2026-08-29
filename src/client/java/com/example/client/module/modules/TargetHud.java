@@ -37,9 +37,9 @@ public class TargetHud extends AbstractModule {
     @SettingInfo(name = "setting.y")
     private final NumberSetting posY = new NumberSetting(0.72, 0, 1, "#.00");
     @SettingInfo(name = "setting.hud_type")
-    private final ModeSetting hudType = new ModeSetting("classic", List.of("classic", "damage_engine"),
-            new SettingAttribute<>(posX, "damage_engine"),
-            new SettingAttribute<>(posY, "damage_engine"));
+    private final ModeSetting hudType = new ModeSetting("style1", List.of("style1", "style2"),
+            new SettingAttribute<>(posX, "style2"),
+            new SettingAttribute<>(posY, "style2"));
 
     public TargetHud() {
         registerSetting(distance, hudType);
@@ -62,7 +62,7 @@ public class TargetHud extends AbstractModule {
             return;
 
         GuiGraphicsExtractor graphics = event.getGuiGraphicsExtractor();
-        if (hudType.is("classic")) {
+        if (hudType.is("style1")) {
             renderClassic(graphics, event);
             return;
         }
