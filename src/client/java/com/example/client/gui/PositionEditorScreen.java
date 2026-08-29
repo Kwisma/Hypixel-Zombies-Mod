@@ -100,15 +100,12 @@ public class PositionEditorScreen extends Screen {
     }
 
     private int previewX() {
-        int x = (int) (this.width * posX.getValue().doubleValue())
+        return (int) Math.round(this.width * posX.getValue().doubleValue())
             - (centerX ? previewWidth / 2 : 0);
-        return Math.clamp(x, 0,
-            Math.max(0, this.width - previewWidth));
     }
 
     private int previewY() {
-        return Math.clamp((int) (this.height * posY.getValue().doubleValue()), 0,
-            Math.max(0, this.height - previewHeight));
+        return (int) Math.round(this.height * posY.getValue().doubleValue());
     }
 
     private boolean isInsidePreview(double mouseX, double mouseY) {
@@ -126,11 +123,11 @@ public class PositionEditorScreen extends Screen {
         double y = top / height;
 
         double minX = centerX ? (previewWidth / 2.0D) / width : 0.0D;
-        double maxX = (this.width - (centerX ? previewWidth / 2.0D : previewWidth)) / width;
-        double maxY = (this.height - previewHeight) / height;
+        double maxX = 1.0D;
+        double maxY = 1.0D;
 
-        x = Math.clamp(x, minX, Math.max(minX, maxX));
-        y = Math.clamp(y, 0.0D, Math.max(0.0D, maxY));
+        x = Math.clamp(x, minX, maxX);
+        y = Math.clamp(y, 0.0D, maxY);
         posX.setValue(x);
         posY.setValue(y);
     }
