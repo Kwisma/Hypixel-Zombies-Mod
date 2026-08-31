@@ -126,6 +126,8 @@
   "zombies-mod.setting.fire_alpha": "Fire Alpha",
   "zombies-mod.module.no_gun_fire": "No Gun Fire",
   "zombies-mod.module.notification": "Notification",
+  "zombies-mod.setting.interval": "Interval",
+  "zombies-mod.module.revive_aura": "Revive Aura",
   "zombies-mod.setting.round_recorder": "Round Recorder",
   "zombies-mod.setting.aa_round_suggest": "AA Round Suggest",
   "zombies-mod.setting.game_stat_chat": "Send Game Stats to Chat",

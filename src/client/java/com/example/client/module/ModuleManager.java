@@ -21,6 +21,7 @@ public class ModuleManager {
 //        add(new BlockTransparency());
         add(new WaveDisplay());
         add(new LightningRodQueue());
+        add(new ReviveAura());
         add(new PowerupPredictor());
         add(new StatsQuery());
         add(new NameProtect());
