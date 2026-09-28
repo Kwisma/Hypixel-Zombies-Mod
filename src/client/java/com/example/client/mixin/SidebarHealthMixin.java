@@ -67,7 +67,14 @@ public class SidebarHealthMixin {
                 // Reserve one line each for the title and the independent latency footer.
                 int totalHeight = lineHeight * (renderedLineCount + 2);
                 int left = screenWidth - sidebarWidth;
-                int top = screenHeight / 2 - totalHeight / 2;
+                // Keep the vanilla title anchor, including blank scoreboard rows.
+                // Added teammate details and the latency footer only extend the panel downward.
+                int originalLineCount = (int) objective.getScoreboard().listPlayerScores(objective).stream()
+                                .filter(entry -> !entry.isHidden())
+                                .limit(15)
+                                .count();
+                int originalHeight = lineHeight * originalLineCount;
+                int top = screenHeight / 2 + originalHeight / 3 - originalHeight - lineHeight;
 
                 graphics.pose().pushMatrix();
                 graphics.pose().translate(left, top);
