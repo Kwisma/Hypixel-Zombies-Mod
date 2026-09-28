@@ -2,12 +2,12 @@ package com.example.client.mixin;
 
 import com.example.client.tracker.TeammateInfo;
 import com.example.client.tracker.TeammateTracker;
-import com.example.client.tracker.LatencyTracker;
 import com.example.client.language.GuiText;
 import com.example.client.module.modules.SidebarModification;
 import com.example.client.utils.PlayerUtils;
 import com.example.client.utils.ScoreboardUtils;
 import com.example.client.utils.ZombiesUtils;
+import com.example.client.utils.render.SidebarLatencyRenderer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Hud;
@@ -17,7 +17,6 @@ import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.util.ARGB;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.scores.DisplaySlot;
@@ -34,7 +33,6 @@ import java.util.List;
 
 @Mixin(Hud.class)
 public class SidebarHealthMixin {
-        private static final int zombiesmod$sidebarWidth = 128;
         private static final int zombiesmod$sidebarPadding = 3;
 
         @Inject(
@@ -42,35 +40,46 @@ public class SidebarHealthMixin {
                         at = @At("HEAD"),
                         cancellable = true
         )
-        private void zombiesmod$renderFixedSidebar(
+        private void zombiesmod$renderSidebar(
                         GuiGraphicsExtractor graphics,
                         Objective objective,
                         CallbackInfo ci
         ) {
                 if (!SidebarModification.isActive() || !zombiesmod$isZombiesMode()) return;
 
-                Font font = Minecraft.getInstance().font;
+                Minecraft minecraft = Minecraft.getInstance();
+                Font font = minecraft.font;
                 List<SidebarEntry> entries = zombiesmod$sidebarEntries();
-                List<Component> renderedLines = new ArrayList<>();
+                Component title = objective.getDisplayName();
+                int contentWidth = Math.max(1, font.width(title));
+                int renderedLineCount = entries.size();
                 for (SidebarEntry entry : entries) {
-                        renderedLines.add(entry.name());
-                        if (entry.info() != null) renderedLines.add(entry.info());
+                        // Extra teammate details fit within the original scoreboard's width.
+                        contentWidth = Math.max(contentWidth, font.width(entry.name()));
+                        if (entry.info() != null) renderedLineCount++;
                 }
 
-                Component title = objective.getDisplayName();
-                int contentWidth = zombiesmod$sidebarWidth - zombiesmod$sidebarPadding * 2;
-
-                int screenWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
-                int screenHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
+                int screenWidth = minecraft.getWindow().getGuiScaledWidth();
+                int screenHeight = minecraft.getWindow().getGuiScaledHeight();
+                contentWidth = Math.min(contentWidth, Math.max(1, screenWidth - zombiesmod$sidebarPadding * 2));
+                int sidebarWidth = contentWidth + zombiesmod$sidebarPadding * 2;
                 int lineHeight = font.lineHeight;
-                int totalHeight = lineHeight * (renderedLines.size() + 1);
-                int left = screenWidth - zombiesmod$sidebarWidth;
+                // Reserve one line each for the title and the independent latency footer.
+                int totalHeight = lineHeight * (renderedLineCount + 2);
+                int left = screenWidth - sidebarWidth;
                 int top = screenHeight / 2 - totalHeight / 2;
 
                 graphics.pose().pushMatrix();
                 graphics.pose().translate(left, top);
+                // Cancelling vanilla rendering also skips its title and body backgrounds.
+                int backgroundLeft = zombiesmod$sidebarPadding - 2;
+                int backgroundRight = sidebarWidth - zombiesmod$sidebarPadding + 2;
+                graphics.fill(backgroundLeft, -1, backgroundRight, lineHeight - 1,
+                                minecraft.options.getBackgroundColor(0.4F));
+                graphics.fill(backgroundLeft, lineHeight - 1, backgroundRight, totalHeight,
+                                minecraft.options.getBackgroundColor(0.3F));
                 float titleScale = zombiesmod$lineScale(font, title, 0, contentWidth);
-                int titleX = (zombiesmod$sidebarWidth - Math.round(font.width(title) * titleScale)) / 2;
+                int titleX = (sidebarWidth - Math.round(font.width(title) * titleScale)) / 2;
                 zombiesmod$drawScaledText(graphics, font, title, titleX, 0, titleScale);
 
                 int y = lineHeight;
@@ -90,6 +99,7 @@ public class SidebarHealthMixin {
                                 y += lineHeight;
                         }
                 }
+                SidebarLatencyRenderer.render(graphics, font, zombiesmod$sidebarPadding, y, contentWidth);
                 graphics.pose().popMatrix();
                 ci.cancel();
         }
@@ -113,20 +123,7 @@ public class SidebarHealthMixin {
                                         player
                         ));
                 }
-                int measuredLatency = LatencyTracker.getLatencyMs();
-                Component latencyValue = measuredLatency < 0
-                                ? Component.literal("--").withStyle(ChatFormatting.GRAY)
-                                : Component.literal(Integer.toString(measuredLatency))
-                                                .withStyle(style -> style.withColor(zombiesmod$pingColor(measuredLatency) & 0xFFFFFF));
-                entries.add(new SidebarEntry(GuiText.text("hud.ping", latencyValue), null, null));
                 return entries;
-        }
-
-        private static int zombiesmod$pingColor(int latencyMs) {
-                int clamped = Math.min(latencyMs, 500);
-                return clamped < 250
-                                ? ARGB.srgbLerp((float) (clamped / 250.0D), 0xFF00FF00, 0xFFFFFF00)
-                                : ARGB.srgbLerp((float) ((clamped - 250) / 250.0D), 0xFFFFFF00, 0xFFFF0000);
         }
 
         private static Component zombiesmod$playerInfo(

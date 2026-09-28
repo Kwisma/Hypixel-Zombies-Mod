@@ -1,7 +1,6 @@
 package com.example.client.tracker;
 
 import com.example.client.module.modules.SidebarModification;
-import com.example.client.utils.PlayerUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.protocol.ping.ServerboundPingRequestPacket;
@@ -28,8 +27,7 @@ public final class LatencyTracker {
     public static synchronized void tick() {
         Minecraft minecraft = Minecraft.getInstance();
         ClientPacketListener current = minecraft.getConnection();
-        if (current == null || minecraft.player == null || !SidebarModification.isActive()
-                || !PlayerUtils.isInHypZombies()) {
+        if (current == null || minecraft.player == null || !SidebarModification.isActive()) {
             reset();
             return;
         }

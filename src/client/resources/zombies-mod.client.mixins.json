@@ -34,6 +34,7 @@
     "MinecraftMixin",
     "EyeHeightMixin",
     "SidebarHealthMixin",
+    "SidebarLatencyMixin",
     "LocalPlayerPickMixin",
     "render.GuiRendererBlurMixin",
     "render.GameRendererLiquidGlassMixin",
