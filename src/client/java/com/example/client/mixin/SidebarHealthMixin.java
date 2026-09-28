@@ -2,6 +2,7 @@ package com.example.client.mixin;
 
 import com.example.client.tracker.TeammateInfo;
 import com.example.client.tracker.TeammateTracker;
+import com.example.client.tracker.LatencyTracker;
 import com.example.client.language.GuiText;
 import com.example.client.module.modules.SidebarModification;
 import com.example.client.utils.PlayerUtils;
@@ -16,6 +17,7 @@ import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.scores.DisplaySlot;
@@ -105,16 +107,26 @@ public class SidebarHealthMixin {
                         }
 
                         Player player = teammate.getRenderEntity();
-                        Component nameLine = teammate.getStatusText().isBlank()
-                                        ? Component.literal(playerName).append(zombiesmod$goldDecoration(teammate))
-                                        : line.component();
                         entries.add(new SidebarEntry(
-                                        nameLine,
+                                        line.component(),
                                         zombiesmod$playerInfo(teammate, player, line.component(), teammate.getName()),
                                         player
                         ));
                 }
+                int measuredLatency = LatencyTracker.getLatencyMs();
+                Component latencyValue = measuredLatency < 0
+                                ? Component.literal("--").withStyle(ChatFormatting.GRAY)
+                                : Component.literal(Integer.toString(measuredLatency))
+                                                .withStyle(style -> style.withColor(zombiesmod$pingColor(measuredLatency) & 0xFFFFFF));
+                entries.add(new SidebarEntry(GuiText.text("hud.ping", latencyValue), null, null));
                 return entries;
+        }
+
+        private static int zombiesmod$pingColor(int latencyMs) {
+                int clamped = Math.min(latencyMs, 500);
+                return clamped < 250
+                                ? ARGB.srgbLerp((float) (clamped / 250.0D), 0xFF00FF00, 0xFFFFFF00)
+                                : ARGB.srgbLerp((float) ((clamped - 250) / 250.0D), 0xFFFFFF00, 0xFFFF0000);
         }
 
         private static Component zombiesmod$playerInfo(
@@ -146,11 +158,6 @@ public class SidebarHealthMixin {
                                 .append(zombiesmod$killsDecoration(original, playerName))
                                 .append(Component.literal(blockingText).withStyle(ChatFormatting.YELLOW))
                                 .append(Component.literal(shiftText).withStyle(ChatFormatting.AQUA));
-        }
-
-        private static Component zombiesmod$goldDecoration(TeammateInfo teammate) {
-                return Component.literal(": " + String.format("%,d", teammate.getGold()))
-                                .withStyle(ChatFormatting.GOLD);
         }
 
         private static float zombiesmod$lineScale(Font font, Component line, int extraWidth, int contentWidth) {

@@ -65,6 +65,7 @@
   "zombies-mod.hud.wave": "Wave",
   "zombies-mod.hud.round_title": "Round %s [%s]%s%s",
   "zombies-mod.hud.wave_time": "Wave %s  %s",
+  "zombies-mod.hud.ping": "Ping: %s ms",
   "zombies-mod.hud.powerup.insta": "Insta Kill",
   "zombies-mod.hud.powerup.max": "Max Ammo",
   "zombies-mod.hud.powerup.ss": "Shop Spr",
