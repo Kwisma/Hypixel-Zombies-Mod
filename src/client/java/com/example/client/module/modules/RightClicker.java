@@ -83,7 +83,8 @@ public class RightClicker extends AbstractModule {
             }
             String path = model.getPath();
             if (!path.contains("hoe") && !path.contains("shovel")
-                    && !path.contains("pickaxe") && !path.equals("flint_and_steel")) {
+                    && !path.contains("pickaxe") && !path.equals("shears")
+                    && !path.equals("flint_and_steel")) {
                 nextClickNanos = 0;
                 return;
             }
