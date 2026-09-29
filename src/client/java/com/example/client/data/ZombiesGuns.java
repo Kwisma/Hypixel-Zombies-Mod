@@ -1,0 +1,102 @@
+package com.example.client.data;
+
+import com.example.client.language.GuiText;
+import lombok.Getter;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
+@Getter
+public enum ZombiesGuns {
+    Pistol(Items.WOODEN_HOE, 10, 15, 6, 6),
+    Rifle(Items.STONE_HOE, 7, 10, 6, 8),
+    Rainbow_Rifle(Items.GOLDEN_SHOVEL, 5, 7, 5, 6, 6.5, 7),
+    Shotgun(Items.IRON_HOE, 8, 12, 4.5, 4.5),
+    Rocket_Launcher(Items.STONE_SHOVEL, 10, 15, 10, 10),
+    Sniper(Items.WOODEN_SHOVEL, 30, 45, 30, 40),
+    Flamethrower(Items.GOLDEN_HOE, 4, 6, 2, 2),
+    Blow_Dart(Items.IRON_SHOVEL, 20, 30, 10, 10),
+    Zombie_Soaker(Items.DIAMOND_HOE, 5, 10, 5, 8),
+    Zombie_Zapper(Items.DIAMOND_PICKAXE, 15, 20, 12, 18),
+    Double_Barrel_Shotgun(Items.FLINT_AND_STEEL, 8, 12, 7, 7, 8, 8),
+    Elder_Gun(Items.SHEARS, 20, 30, 15, 20),
+    Gold_Digger(Items.GOLDEN_PICKAXE, 10, 15, 6, 8, 10, 12, 15, 20);
+
+    private final Item item;
+    private final int gold;
+    private final int criticalGold;
+    private final double damage;
+    private final double[] ultimatedDamage;
+
+    ZombiesGuns(Item item, int gold, int criticalGold, double damage, double... ultimatedDamage) {
+        this.item = item;
+        this.gold = gold;
+        this.criticalGold = criticalGold;
+        this.damage = damage;
+        this.ultimatedDamage = ultimatedDamage;
+    }
+    public String getDisplayName() {
+        return getLocalizedDisplayName();
+    }
+
+    public String getLocalizedDisplayName() {
+        String key = switch (this) {
+            case Pistol -> "pistol";
+            case Rifle -> "rifle";
+            case Rainbow_Rifle -> "rainbow_rifle";
+            case Shotgun -> "shotgun";
+            case Rocket_Launcher -> "rocket_launcher";
+            case Sniper -> "sniper";
+            case Flamethrower -> "flamethrower";
+            case Blow_Dart -> "blow_dart";
+            case Zombie_Soaker -> "zombie_soaker";
+            case Zombie_Zapper -> "zombie_zapper";
+            case Double_Barrel_Shotgun -> "double_barrel_shotgun";
+            case Elder_Gun -> "elder_gun";
+            case Gold_Digger -> "gold_digger";
+        };
+        return GuiText.textString("gun." + key);
+    }
+    public static ZombiesGuns getGunOrNull(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return null;
+        return ITEM_TO_GUN.get(stack.getItem());
+    }
+    public static final Map<Item, ZombiesGuns> ITEM_TO_GUN =
+            Arrays.stream(values()).collect(Collectors.toMap(
+                    ZombiesGuns::getItem,
+                    gun -> gun
+            ));
+    public double getDamageByUltimateLevel(int ultimateLevel) {
+        if (ultimateLevel <= 0)
+            return damage;
+
+        if (ultimatedDamage == null || ultimatedDamage.length == 0)
+            return damage;
+
+        int index = Math.min(ultimateLevel - 1, ultimatedDamage.length - 1);
+
+        return ultimatedDamage[index];
+    }
+
+    /** 返回这把枪可配置的强化等级数量（0 表示基础枪，1 表示 Ultimate I）。 */
+    public int getUltimateLevelCount() {
+        return ultimatedDamage == null ? 0 : ultimatedDamage.length;
+    }
+
+    /**
+     * 判断是否能多次强化
+     */
+    public boolean hasMultiUltimateDamage() {
+        return ultimatedDamage != null && ultimatedDamage.length > 1;
+    }
+    public static boolean isZombiesGun(ItemStack stack) {
+        if (stack == null || stack.isEmpty())
+            return false;
+
+        return ZombiesGuns.ITEM_TO_GUN.containsKey(stack.getItem());
+    }
+
+}

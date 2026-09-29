@@ -1,0 +1,46 @@
+{
+  "required": true,
+  "package": "com.example.client.mixin",
+  "plugin": "com.example.client.mixin.ZombiesMixinPlugin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "ExampleClientMixin",
+    "PauseScreenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  },
+  "mixins": [
+    "render.EntityRendererMixin",
+    "EquipmentLayerRendererMixin",
+    "HumanoidArmorLayerMixin",
+    "CustomHeadLayerMixin",
+    "HeldItemAlphaMixin",
+    "ItemFeatureRendererAlphaMixin",
+    "KeyboardHandlerMixin",
+    "MouseHandlerInvoker",
+    "render.LivingEntityRendererMixin",
+    "render.LivingEntityRenderStateMixin",
+    "render.BadHeadshotRenderMixin",
+    "render.AltModelBlockRendererTransparencyMixin",
+    "FontNameProtectMixin",
+    "GlyphRenderStateGradientMixin",
+    "GlyphRenderStateLinearFilterMixin",
+    "GuiRendererGradientMixin",
+    "GuiTextRenderStateGradientMixin",
+    "MinecraftMixin",
+    "EyeHeightMixin",
+    "SidebarHealthMixin",
+    "SidebarLatencyMixin",
+    "LocalPlayerPickMixin",
+    "render.GuiRendererBlurMixin",
+    "render.GameRendererLiquidGlassMixin",
+    "ScreenEffectRendererMixin",
+    "packet.ClientPacketListenerMixin",
+    "packet.ClientPacketListenerSoundMixin",
+    "packet.ConnectionMixin"
+  ]
+}

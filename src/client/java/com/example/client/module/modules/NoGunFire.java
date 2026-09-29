@@ -1,0 +1,76 @@
+package com.example.client.module.modules;
+
+import com.example.client.data.ZombiesGuns;
+import com.example.client.ZombiesModClient;
+import com.example.client.language.Language;
+import com.example.client.module.AbstractModule;
+import com.example.client.module.annotation.ModuleInfo;
+import com.example.client.utils.PlayerUtils;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
+
+@ModuleInfo(name = "module.no_gun_fire", enable = true)
+public class NoGunFire extends AbstractModule {
+    @Override
+    protected void onEnable() {
+        super.onEnable();
+    }
+
+
+    public static boolean shouldCancel(ClientboundLevelParticlesPacket packet) {
+        if (mc.player == null || mc.level == null) {
+            return false;
+        }
+
+        NoGunFire module = ((NoGunFire) ZombiesModClient.moduleManager.getModule("module.no_gun_fire"));
+
+        if (module == null || !module.isEnable()) {
+            return false;
+        }
+
+        if (!PlayerUtils.isInHypZombies()) {
+            return false;
+        }
+
+        if (!ZombiesGuns.isZombiesGun(mc.player.getMainHandItem())) {
+            return false;
+        }
+
+        ParticleOptions options = packet.particle();
+
+        if (!isGunFireParticle(options)) {
+            return false;
+        }
+
+        /*
+         * 只屏蔽玩家附近的火焰粒子，避免把地图里的火焰也屏蔽掉。
+         */
+        double distanceSq = mc.player.distanceToSqr(
+                packet.x(),
+                packet.y(),
+                packet.z()
+        );
+
+        return distanceSq <= 26.0;
+    }
+
+    private static boolean isGunFireParticle(ParticleOptions options) {
+        if (options == null) {
+            return false;
+        }
+
+        ParticleType<?> type = options.getType();
+
+        return type == ParticleTypes.FLAME
+                || type == ParticleTypes.SMALL_FLAME
+                || type == ParticleTypes.LAVA
+                || type == ParticleTypes.SMOKE
+                || type == ParticleTypes.LARGE_SMOKE
+                || type == ParticleTypes.CAMPFIRE_COSY_SMOKE
+                || type == ParticleTypes.CAMPFIRE_SIGNAL_SMOKE
+                || type == ParticleTypes.FIREWORK
+                || type == ParticleTypes.POOF;
+    }
+}

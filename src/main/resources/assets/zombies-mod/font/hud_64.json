@@ -1,0 +1,11 @@
+{
+  "providers": [
+    {
+      "type": "ttf",
+      "file": "zombies-mod:misans-bold.ttf",
+      "shift": [0, 0],
+      "size": 64,
+      "oversample": 3
+    }
+  ]
+}

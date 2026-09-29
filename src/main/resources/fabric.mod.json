@@ -1,31 +1,35 @@
 {
 	"schemaVersion": 1,
-	"id": "modid",
+	"id": "zombies-mod",
 	"version": "${version}",
-	"name": "Example Mod",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"name": "Zombies-Mod",
+	"description": "Hypixel Zombies Mod",
 	"authors": [
-		"Me!"
+		"FairCauth"
 	],
 	"contact": {
 		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"sources": "https://github.com/FairCauth/Hypixel-Zombies-Mod"
 	},
 	"license": "CC0-1.0",
-	"icon": "assets/modid/icon.png",
+	"icon": "assets/zombies-mod/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.example.ExampleMod"
+			"com.example.ZombiesMod"
 		],
 		"client": [
-			"com.example.client.ExampleModClient"
+			"com.example.client.ZombiesModClient"
 		]
 	},
 	"mixins": [
-		"modid.mixins.json",
+		"zombies-mod.mixins.json",
 		{
-			"config": "modid.client.mixins.json",
+			"config": "zombies-mod.client.mixins.json",
+			"environment": "client"
+		},
+		{
+			"config": "zombies-mod.chams.mixins.json",
 			"environment": "client"
 		}
 	],

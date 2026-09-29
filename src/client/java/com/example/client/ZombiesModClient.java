@@ -1,0 +1,112 @@
+package com.example.client;
+
+
+import com.darkmagician6.eventapi.EventManager;
+import com.darkmagician6.eventapi.EventTarget;
+import com.example.client.config.AutoSwitchWeaponConfig;
+import com.example.client.config.ZombiesConfig;
+import com.example.client.language.GuiText;
+import com.example.client.data.ZombiesGuns;
+import com.example.client.events.FabricEvents;
+import com.example.client.events.KeyInputEvent;
+import com.example.client.gui.ZombiesConfigScreen;
+import com.example.client.module.AbstractModule;
+import com.example.client.module.ModuleManager;
+import com.example.client.module.modules.AutoSwitchWeapon;
+import com.example.client.tracker.ServerTracker;
+import com.example.client.utils.ChatUtils;
+import com.example.client.utils.IMinecraft;
+import net.fabricmc.api.ClientModInitializer;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import com.mojang.blaze3d.platform.InputConstants;
+
+public class ZombiesModClient implements ClientModInitializer, IMinecraft {
+	public static ModuleManager moduleManager;
+
+	public static int guiKey = InputConstants.KEY_RSHIFT;
+	public static final ServerTracker serverTracker = new ServerTracker();
+	@Override
+	public void onInitializeClient() {
+		moduleManager = new ModuleManager();
+
+		FabricEvents.register();
+
+		ZombiesConfig.load();
+		EventManager.register(this);
+	}
+	@EventTarget
+	public void onKey(KeyInputEvent event) {
+		if (mc.player == null || mc.level == null) {
+			return;
+		}
+
+		if (event.getAction() != InputConstants.PRESS) {
+			return;
+		}
+
+		if (mc.gui.screen() != null) {
+			return;
+		}
+//		if(event.getKey() == InputConstants.KEY_O) {
+//
+//			ItemStack s = mc.player.getMainHandItem();
+//			System.out.println("=== GUN DUMP ===");
+//			System.out.println("name=" + s.getHoverName().getString()
+//					+ "  count=" + s.getCount()
+//					+ "  dmg=" + s.getDamageValue() + "/" + s.getMaxDamage());
+//
+//			var lore = s.get(net.minecraft.core.component.DataComponents.LORE);
+//			if (lore != null) lore.lines().forEach(l -> System.out.println("  lore: " + l.getString()));
+//
+//			var custom = s.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+//			if (custom != null) System.out.println("  NBT: " + custom.copyTag());   // ★ 弹药很可能在这
+//
+//			System.out.println("  components: " + s.getComponents());
+//		}
+		if (event.getKey() == guiKey) {
+			if (ZombiesConfigScreen.instance == null) {
+				ZombiesConfigScreen.instance = new ZombiesConfigScreen(null);
+			}
+			ZombiesConfigScreen.instance.setParent(null);
+			mc.gui.setScreen(ZombiesConfigScreen.instance);
+		}
+
+		// 模块快捷键：切换绑定了该键的模块
+		for (AbstractModule m : moduleManager.getModuleList()) {
+			if (m.getKey() != 0 && m.getKey() == event.getKey()) {
+				m.toggle();
+				ZombiesConfig.save();
+			}
+		}
+
+		// 枪械快捷键：切换绑定了该键的枪的自动切换开关
+		for (ZombiesGuns gun : ZombiesGuns.values()) {
+			AutoSwitchWeaponConfig.GunSwitchSetting cfg = AutoSwitchWeaponConfig.get(gun);
+			if (cfg.getKey() != 0 && cfg.getKey() == event.getKey()) {
+				cfg.setEnabled(!cfg.isEnabled());
+				ChatUtils.print(Component.literal(gun.getDisplayName()).withStyle(ChatFormatting.YELLOW)
+						.append(GuiText.text(cfg.isEnabled() ? "chat.enabled" : "chat.disabled").copy()
+								.withStyle(cfg.isEnabled() ? ChatFormatting.GREEN : ChatFormatting.RED)));
+				ZombiesConfig.save();
+			}
+		}
+
+		// 快捷栏模式：各槽位独立开关键
+		if (AutoSwitchWeapon.switchType.is("Hotbar")) {
+			checkHotbarSlotKey(event.getKey(), AutoSwitchWeapon.slot2, 2);
+			checkHotbarSlotKey(event.getKey(), AutoSwitchWeapon.slot3, 3);
+			checkHotbarSlotKey(event.getKey(), AutoSwitchWeapon.slot4, 4);
+		}
+
+	}
+
+	private void checkHotbarSlotKey(int pressedKey, com.example.client.setting.settings.HotbarSlotSetting slot, int slotNumber) {
+		if (slot.getValue() == 0 || pressedKey != slot.getValue()) return;
+		slot.toggleActive();
+		ZombiesConfig.save();
+		ChatUtils.print(GuiText.text("gui.hotbar_slot", slotNumber).copy().withStyle(ChatFormatting.YELLOW)
+				.append(GuiText.text(slot.isActive() ? "chat.enabled" : "chat.disabled").copy()
+						.withStyle(slot.isActive() ? ChatFormatting.GREEN : ChatFormatting.RED)));
+	}
+}

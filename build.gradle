@@ -3,6 +3,9 @@ plugins {
 	id 'maven-publish'
 }
 
+version = project.mod_version
+group = project.maven_group
+
 repositories {
 	// Add repositories to retrieve artifacts from in here.
 	// You should only use this when depending on other mods because
@@ -15,20 +18,28 @@ loom {
 	splitEnvironmentSourceSets()
 
 	mods {
-		"modid" {
+		"zombies-mod" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}
 	}
+
 }
 
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+    compileOnly 'org.projectlombok:lombok:1.18.46'
+    annotationProcessor 'org.projectlombok:lombok:1.18.46'
+
+    testCompileOnly 'org.projectlombok:lombok:1.18.46'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.46'
 }
 
 processResources {
@@ -42,6 +53,7 @@ processResources {
 
 tasks.withType(JavaCompile).configureEach {
 	it.options.release = 25
+	it.options.compilerArgs += ['-Xlint:deprecation', '-Xlint:unchecked']
 }
 
 java {
@@ -52,6 +64,35 @@ java {
 
 	sourceCompatibility = JavaVersion.VERSION_25
 	targetCompatibility = JavaVersion.VERSION_25
+}
+
+// Exercise every Mixin against the real 26.3 classes without opening a game window.
+sourceSets {
+	portTest {
+		compileClasspath += sourceSets.main.output + sourceSets.client.output + sourceSets.client.compileClasspath
+		runtimeClasspath += sourceSets.client.runtimeClasspath
+	}
+}
+
+tasks.register('verifyPort', JavaExec) {
+	group = 'verification'
+	description = 'Validate 26.3 Mixins, render-pass bindings, shaders, key bindings and reflective access.'
+	dependsOn tasks.named('portTestClasses'), tasks.named('clientClasses')
+	classpath = sourceSets.portTest.runtimeClasspath
+	mainClass = 'net.fabricmc.loader.impl.launch.knot.KnotClient'
+	systemProperty 'fabric.development', 'true'
+	systemProperty 'fabric.gameVersion', project.minecraft_version
+	systemProperty 'java.awt.headless', 'true'
+	// Use LWJGL's Java 25+ memory backend instead of deprecated Unsafe access.
+	systemProperty 'org.lwjgl.system.memoryBackend', 'ffm'
+	// Optional GPU regression check in a hidden window; normal builds remain headless.
+	systemProperty 'zombiesmod.test.chamsPixels', providers.gradleProperty('chamsPixelTest').getOrElse('false')
+	jvmArgs '--enable-native-access=ALL-UNNAMED'
+	workingDir layout.buildDirectory
+}
+
+tasks.named('check') {
+	dependsOn tasks.named('verifyPort')
 }
 
 jar {
