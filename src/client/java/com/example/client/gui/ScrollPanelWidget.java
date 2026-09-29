@@ -1,5 +1,6 @@
 package com.example.client.gui;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -332,7 +333,8 @@ public class ScrollPanelWidget extends AbstractWidget {
             return false;
         }
 
-        if (event.button() == 0 && isMouseOverScrollbar(event.x(), event.y())) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT
+                && isMouseOverScrollbar(event.x(), event.y())) {
             int thumbY = getThumbY();
 
             if (isMouseOverThumb(event.x(), event.y())) {
@@ -364,7 +366,7 @@ public class ScrollPanelWidget extends AbstractWidget {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
-        if (draggingScrollbar && event.button() == 0) {
+        if (draggingScrollbar && event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             draggingScrollbar = false;
             return true;
         }
@@ -386,7 +388,7 @@ public class ScrollPanelWidget extends AbstractWidget {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
-        if (draggingScrollbar && event.button() == 0) {
+        if (draggingScrollbar && event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             setScrollOffsetFromMouse(event.y());
             return true;
         }

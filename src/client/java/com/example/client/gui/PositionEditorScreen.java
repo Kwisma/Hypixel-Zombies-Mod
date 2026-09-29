@@ -2,6 +2,7 @@ package com.example.client.gui;
 
 import com.example.client.config.ZombiesConfig;
 import com.example.client.setting.settings.NumberSetting;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
@@ -73,7 +74,8 @@ public class PositionEditorScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        if (event.button() == 0 && isInsidePreview(event.x(), event.y())) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT
+                && isInsidePreview(event.x(), event.y())) {
             dragging = true;
             dragOffsetX = event.x() - previewX();
             dragOffsetY = event.y() - previewY();
@@ -85,7 +87,7 @@ public class PositionEditorScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
-        if (dragging && event.button() == 0) {
+        if (dragging && event.button() == InputConstants.MOUSE_BUTTON_LEFT) {
             updatePosition(event.x(), event.y());
             return true;
         }
@@ -94,7 +96,7 @@ public class PositionEditorScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
-        if (event.button() == 0 && dragging) {
+        if (event.button() == InputConstants.MOUSE_BUTTON_LEFT && dragging) {
             dragging = false;
             ZombiesConfig.save();
             return true;
