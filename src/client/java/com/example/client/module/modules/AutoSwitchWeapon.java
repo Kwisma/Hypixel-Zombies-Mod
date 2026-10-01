@@ -154,6 +154,10 @@ public class AutoSwitchWeapon extends AbstractModule {
 
         ItemStack nextStack = mc.player.getInventory().getItem(nextSlot);
         boolean reload = needsReload(nextStack);
+        ZombiesGuns nextGun = ZombiesGuns.getGunOrNull(nextStack);
+        if (nextGun != null) {
+            lastSwitchMs.put(nextGun, System.currentTimeMillis());
+        }
         setSelectedSlot(nextSlot);
         if (reload) {
             KeyMapping.click(mc.options.keyAttack.getDefaultKey());
