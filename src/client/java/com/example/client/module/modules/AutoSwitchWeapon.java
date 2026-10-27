@@ -16,6 +16,9 @@ import com.example.client.setting.settings.HotbarSlotSetting;
 import com.example.client.setting.settings.ModeSetting;
 import com.example.client.setting.settings.NumberSetting;
 import com.example.client.utils.TimeUtils;
+import com.example.client.mixin.KeyMappingAccessor;
+import com.mojang.blaze3d.platform.InputConstants;
+import org.lwjgl.glfw.GLFW;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.item.ItemStack;
@@ -98,7 +101,7 @@ public class AutoSwitchWeapon extends AbstractModule {
             timeUtils.reset();
             return;
         }
-        boolean useDown = mc.options.keyUse.isDown();
+        boolean useDown = isUsePressed();
 
         if (!useDown) {
             lastUseDown = false;
@@ -253,5 +256,16 @@ public class AutoSwitchWeapon extends AbstractModule {
     private static void setSelectedSlot(int slot) {
         if (slot < 0 || slot > 8) return;
         mc.player.getInventory().setSelectedSlot(slot);
+    }
+
+    private boolean isUsePressed() {
+        InputConstants.Key useKey = ((KeyMappingAccessor) (Object) mc.options.keyUse).zombiesmod$getKey();
+        if (useKey.getType() == InputConstants.Type.MOUSE) {
+            return GLFW.glfwGetMouseButton(mc.getWindow().handle(), useKey.getValue()) == GLFW.GLFW_PRESS;
+        }
+        if (useKey.getType() == InputConstants.Type.KEYSYM) {
+            return InputConstants.isKeyDown(mc.getWindow(), useKey.getValue());
+        }
+        return mc.options.keyUse.isDown();
     }
 }
