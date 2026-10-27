@@ -3,6 +3,7 @@ package com.example.client.module.modules;
 import com.darkmagician6.eventapi.EventTarget;
 import com.example.client.data.ZombiesGuns;
 import com.example.client.events.RenderEvent;
+import com.example.client.mixin.KeyMappingAccessor;
 import com.example.client.module.AbstractModule;
 import com.example.client.module.annotation.ModuleInfo;
 import com.example.client.setting.annotation.SettingInfo;
@@ -10,6 +11,7 @@ import com.example.client.setting.settings.ModeSetting;
 import com.example.client.setting.settings.NumberSetting;
 import com.example.client.mixin.MouseHandlerInvoker;
 import com.example.client.utils.TimeUtils;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.core.BlockPos;
@@ -51,7 +53,7 @@ public class RightClicker extends AbstractModule {
 
     @EventTarget
     public void onClick(RenderEvent event) {
-        if (!mc.options.keyUse.isDown() || mc.player == null || mc.level == null || mc.gui.screen() != null) {
+        if (!isUsePressed() || mc.player == null || mc.level == null || mc.gui.screen() != null) {
             resetClickState();
             return;
         }
@@ -91,13 +93,21 @@ public class RightClicker extends AbstractModule {
         }
         if (nextClickNanos == 0) nextClickNanos = now;
         if (now >= nextClickNanos) {
+            InputConstants.Key useKey = ((KeyMappingAccessor) (Object) mc.options.keyUse).zombiesmod$getKey();
             if (mode.is("Simulate")) {
-                ((MouseHandlerInvoker) (Object) mc.mouseHandler).zombiesmod$onButton(
-                        mc.getWindow().handle(),
-                        new MouseButtonInfo(GLFW.GLFW_MOUSE_BUTTON_RIGHT, 0),
-                        1);
+                if (useKey.getType() == InputConstants.Type.MOUSE) {
+                    MouseHandlerInvoker mouseHandler = (MouseHandlerInvoker) (Object) mc.mouseHandler;
+                    MouseButtonInfo button = new MouseButtonInfo(useKey.getValue(), 0);
+                    mouseHandler.zombiesmod$onButton(mc.getWindow().handle(), button, GLFW.GLFW_RELEASE);
+                    mouseHandler.zombiesmod$onButton(mc.getWindow().handle(), button, GLFW.GLFW_PRESS);
+                    mouseHandler.zombiesmod$onButton(mc.getWindow().handle(), button, GLFW.GLFW_RELEASE);
+                } else {
+                    KeyMapping.click(useKey);
+                    KeyMapping.set(useKey, false);
+                }
             } else {
-                KeyMapping.click(mc.options.keyUse.getDefaultKey());
+                KeyMapping.click(useKey);
+                KeyMapping.set(useKey, false);
             }
             long interval = TimeUtils.randomClickDelayNanos(minCPS.getValue().intValue(), maxCPS.getValue().intValue());
             nextClickNanos += interval;
@@ -113,6 +123,17 @@ public class RightClicker extends AbstractModule {
     private void resetClickState() {
         holdStartNanos = 0;
         nextClickNanos = 0;
+    }
+
+    private boolean isUsePressed() {
+        InputConstants.Key useKey = ((KeyMappingAccessor) (Object) mc.options.keyUse).zombiesmod$getKey();
+        if (useKey.getType() == InputConstants.Type.MOUSE) {
+            return GLFW.glfwGetMouseButton(mc.getWindow().handle(), useKey.getValue()) == GLFW.GLFW_PRESS;
+        }
+        if (useKey.getType() == InputConstants.Type.KEYSYM) {
+            return InputConstants.isKeyDown(mc.getWindow(), useKey.getValue());
+        }
+        return mc.options.keyUse.isDown();
     }
 
     private boolean shouldSkipInteraction() {
