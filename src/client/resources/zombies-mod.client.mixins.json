@@ -22,6 +22,7 @@
     "ItemFeatureRendererAlphaMixin",
     "KeyboardHandlerMixin",
     "MouseHandlerInvoker",
+    "KeyMappingAccessor",
     "MinecraftAccessor",
     "render.LivingEntityRendererMixin",
     "render.LivingEntityRenderStateMixin",
