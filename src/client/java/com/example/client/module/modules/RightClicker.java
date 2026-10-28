@@ -97,9 +97,17 @@ public class RightClicker extends AbstractModule {
                 if (useKey.getType() == InputConstants.Type.MOUSE) {
                     MouseHandlerInvoker mouseHandler = (MouseHandlerInvoker) (Object) mc.mouseHandler;
                     MouseButtonInfo button = new MouseButtonInfo(useKey.getValue(), 0);
+                    boolean useHeld = isUsePressed();
                     mouseHandler.zombiesmod$onButton(mc.getWindow().handle(), button, InputConstants.RELEASE);
                     mouseHandler.zombiesmod$onButton(mc.getWindow().handle(), button, InputConstants.PRESS);
                     mouseHandler.zombiesmod$onButton(mc.getWindow().handle(), button, InputConstants.RELEASE);
+                    if (useHeld) {
+                        mouseHandler.zombiesmod$onButton(
+                                mc.getWindow().handle(),
+                                button,
+                                InputConstants.PRESS
+                        );
+                    }
                 } else {
                     KeyMapping.click(useKey);
                     KeyMapping.set(useKey, false);
