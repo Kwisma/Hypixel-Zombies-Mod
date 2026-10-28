@@ -45,6 +45,8 @@ public class RightClicker extends AbstractModule {
     private final ModeSetting filterMode = new ModeSetting("Guns", Arrays.asList("Any", "Guns", "Tools"));
     private long holdStartNanos;
     private long nextClickNanos;
+    private InputConstants.Key releasedUseKey;
+    private boolean releasedUseKeyWithMouseEvent;
 
     public RightClicker() {
         registerSetting(mode, maxCPS, minCPS, filterMode);
@@ -73,6 +75,7 @@ public class RightClicker extends AbstractModule {
         ItemStack current = mc.player.getMainHandItem();
 
         if (filterMode.is("Guns") && !ZombiesGuns.isZombiesGun(current)) {
+            restoreHeldUseKey();
             nextClickNanos = 0;
             return;
         }
@@ -80,6 +83,7 @@ public class RightClicker extends AbstractModule {
             net.minecraft.resources.Identifier model =
                     current.get(net.minecraft.core.component.DataComponents.ITEM_MODEL);
             if (model == null) {
+                restoreHeldUseKey();
                 nextClickNanos = 0;
                 return;
             }
@@ -87,6 +91,7 @@ public class RightClicker extends AbstractModule {
             if (!path.contains("hoe") && !path.contains("shovel")
                     && !path.contains("pickaxe") && !path.equals("shears")
                     && !path.equals("flint_and_steel")) {
+                restoreHeldUseKey();
                 nextClickNanos = 0;
                 return;
             }
@@ -101,14 +106,18 @@ public class RightClicker extends AbstractModule {
                     mouseHandler.zombiesmod$onButton(mc.getWindow().handle(), button, GLFW.GLFW_RELEASE);
                     mouseHandler.zombiesmod$onButton(mc.getWindow().handle(), button, GLFW.GLFW_PRESS);
                     mouseHandler.zombiesmod$onButton(mc.getWindow().handle(), button, GLFW.GLFW_RELEASE);
+                    releasedUseKeyWithMouseEvent = true;
                 } else {
                     KeyMapping.click(useKey);
                     KeyMapping.set(useKey, false);
+                    releasedUseKeyWithMouseEvent = false;
                 }
             } else {
                 KeyMapping.click(useKey);
                 KeyMapping.set(useKey, false);
+                releasedUseKeyWithMouseEvent = false;
             }
+            releasedUseKey = useKey;
             long interval = TimeUtils.randomClickDelayNanos(minCPS.getValue().intValue(), maxCPS.getValue().intValue());
             nextClickNanos += interval;
             if (nextClickNanos <= now) nextClickNanos = now + interval;
@@ -123,6 +132,29 @@ public class RightClicker extends AbstractModule {
     private void resetClickState() {
         holdStartNanos = 0;
         nextClickNanos = 0;
+        releasedUseKey = null;
+        releasedUseKeyWithMouseEvent = false;
+    }
+
+    private void restoreHeldUseKey() {
+        if (releasedUseKey == null) return;
+
+        InputConstants.Key useKey = ((KeyMappingAccessor) (Object) mc.options.keyUse).zombiesmod$getKey();
+        if (useKey.equals(releasedUseKey) && isUsePressed()) {
+            if (releasedUseKeyWithMouseEvent) {
+                MouseHandlerInvoker mouseHandler = (MouseHandlerInvoker) (Object) mc.mouseHandler;
+                mouseHandler.zombiesmod$onButton(
+                        mc.getWindow().handle(),
+                        new MouseButtonInfo(useKey.getValue(), 0),
+                        GLFW.GLFW_PRESS
+                );
+            } else {
+                KeyMapping.set(useKey, true);
+            }
+        }
+
+        releasedUseKey = null;
+        releasedUseKeyWithMouseEvent = false;
     }
 
     private boolean isUsePressed() {
