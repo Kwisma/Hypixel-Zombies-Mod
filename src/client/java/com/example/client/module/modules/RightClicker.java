@@ -97,24 +97,15 @@ public class RightClicker extends AbstractModule {
                 if (useKey.getType() == InputConstants.Type.MOUSE) {
                     MouseHandlerInvoker mouseHandler = (MouseHandlerInvoker) (Object) mc.mouseHandler;
                     MouseButtonInfo button = new MouseButtonInfo(useKey.getValue(), 0);
-                    boolean useHeld = isUsePressed();
                     mouseHandler.zombiesmod$onButton(mc.getWindow().handle(), button, InputConstants.RELEASE);
                     mouseHandler.zombiesmod$onButton(mc.getWindow().handle(), button, InputConstants.PRESS);
-                    mouseHandler.zombiesmod$onButton(mc.getWindow().handle(), button, InputConstants.RELEASE);
-                    if (useHeld) {
-                        mouseHandler.zombiesmod$onButton(
-                                mc.getWindow().handle(),
-                                button,
-                                InputConstants.PRESS
-                        );
-                    }
                 } else {
                     KeyMapping.click(useKey);
-                    KeyMapping.set(useKey, false);
+                    KeyMapping.set(useKey, isUsePressed());
                 }
             } else {
                 KeyMapping.click(useKey);
-                KeyMapping.set(useKey, false);
+                KeyMapping.set(useKey, isUsePressed());
             }
             long interval = TimeUtils.randomClickDelayNanos(minCPS.getValue().intValue(), maxCPS.getValue().intValue());
             nextClickNanos += interval;
@@ -135,6 +126,9 @@ public class RightClicker extends AbstractModule {
     private boolean isUsePressed() {
         InputConstants.Key useKey = ((KeyMappingAccessor) (Object) mc.options.keyUse).zombiesmod$getKey();
         if (useKey.getType() == InputConstants.Type.MOUSE) {
+            if (useKey.getValue() == InputConstants.MOUSE_BUTTON_RIGHT) {
+                return mc.mouseHandler.isRightPressed();
+            }
             return mc.options.keyUse.isDown();
         }
         if (useKey.getType() == InputConstants.Type.KEYBOARD) {
